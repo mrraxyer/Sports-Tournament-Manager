@@ -13,13 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controlador de Torneos - Ejemplo de uso de Genéricos
- *
- * Demuestra reutilización del patrón genérico con una entidad diferente (Torneo).
- * La estructura es idéntica a UsuarioController, solo cambia el tipo genérico
- * y los métodos específicos de Torneo.
- *
- * Esto muestra el poder de los genéricos: mismo patrón, múltiples entidades.
+ * Controlador de Torneos
  */
 @RestController
 @RequestMapping("/api/torneos")
