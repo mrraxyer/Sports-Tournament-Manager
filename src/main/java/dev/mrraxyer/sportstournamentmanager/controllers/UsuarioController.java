@@ -13,19 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Controlador de Usuarios - Ejemplo de uso de Genéricos
- *
- * Demuestra:
- * 1. Uso de ApiResponse<T> genérica para respuestas consistentes
- * 2. Uso de ApiResponseBuilder<T> para construcción fluida
- * 3. Servicio genérico BaseService<Usuario, Integer>
- * 4. Repositorio genérico BaseRepository<Usuario, Integer>
- *
- * La arquitectura es completamente reusable. Para crear un controlador similar
- * de Torneos, Equipos, etc., solo necesitarías cambiar:
- * - El tipo genérico (Usuario -> Torneo, Equipo, etc.)
- * - La clase de servicio (UsuarioService -> TorneoService, etc.)
- * - Los DTOs específicos si los hay
+ * Controlador de Usuarios
  *
  * TODO: Implementar DTOs de entrada (DTO) para validación de datos
  */
