@@ -4,6 +4,13 @@ CREATE TABLE roles (
                        nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
+-- Tabla para almacenar propiedades globales que pueden sobreescribir application.properties
+CREATE TABLE global_properties (
+    id SERIAL PRIMARY KEY,
+    prop_key VARCHAR(255) NOT NULL UNIQUE,
+    prop_value TEXT
+);
+
 -- Almacena la información de autenticación y perfil de todos los usuarios del sistema.
 CREATE TABLE usuarios (
                           usuarios_id SERIAL PRIMARY KEY,
