@@ -15,10 +15,10 @@ api.interceptors.request.use((config) => {
 
     if (rawSession) {
       try {
-        const session = JSON.parse(rawSession) as { token?: string; tokenType?: string }
-        if (session.token) {
+        const session = JSON.parse(rawSession) as { accessToken?: string; tokenType?: string }
+        if (session.accessToken) {
           config.headers = config.headers ?? {}
-          config.headers.Authorization = `${session.tokenType ?? 'Bearer'} ${session.token}`
+          config.headers.Authorization = `${session.tokenType ?? 'Bearer'} ${session.accessToken}`
         }
       } catch {
         window.localStorage.removeItem('stm.auth.session')

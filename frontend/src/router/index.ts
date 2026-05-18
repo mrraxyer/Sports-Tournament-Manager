@@ -15,6 +15,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tournaments',
+    name: 'TournamentManager',
+    component: () => import('../pages/TournamentManager.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     redirect: () => {
       const auth = useAuthStore()

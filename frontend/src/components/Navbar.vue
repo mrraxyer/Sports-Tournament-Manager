@@ -8,6 +8,7 @@ const router = useRouter()
 
 const userDisplayName = computed(() => auth.session?.usuario.nombre || 'Usuario')
 const userEmail = computed(() => auth.session?.usuario.correo || '')
+const isAdmin = computed(() => auth.session?.usuario.rol === 'ADMIN')
 
 function handleLogout() {
   auth.logout()
@@ -18,8 +19,17 @@ function handleLogout() {
 <template>
   <nav class="bg-white border-b border-gray-300 px-6 py-4">
     <div class="flex justify-between items-center">
-      <div>
+      <div class="flex items-center gap-6">
         <h1 class="text-lg font-semibold text-gray-900">Sports Tournament Manager</h1>
+        <div v-if="isAdmin" class="flex gap-4">
+          <router-link to="/dashboard" class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Dashboard
+          </router-link>
+          <router-link to="/tournaments"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Torneos
+          </router-link>
+        </div>
       </div>
       <div class="flex items-center gap-4">
         <div class="text-right">

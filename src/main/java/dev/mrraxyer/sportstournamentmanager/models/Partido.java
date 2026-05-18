@@ -33,10 +33,10 @@ public class Partido {
     @JoinColumn(name = "id_equipo_visitante", nullable = false)
     private Equipo equipoVisitante;
     
-    @Column(nullable = false)
+    @Column(name = "goles_local", nullable = false)
     private Integer golesLocal = 0;
-    
-    @Column(nullable = false)
+
+    @Column(name = "goles_visitante", nullable = false)
     private Integer golesVisitante = 0;
     
     @Column(nullable = false, name = "fecha_partido")
