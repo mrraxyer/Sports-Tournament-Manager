@@ -1,18 +1,18 @@
 -- Define los roles disponibles en el sistema.
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
                        roles_id SERIAL PRIMARY KEY,
                        nombre VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- Tabla para almacenar propiedades globales que pueden sobreescribir application.properties
-CREATE TABLE global_properties (
+CREATE TABLE IF NOT EXISTS global_properties (
     id SERIAL PRIMARY KEY,
     prop_key VARCHAR(255) NOT NULL UNIQUE,
     prop_value TEXT
 );
 
 -- Almacena la información de autenticación y perfil de todos los usuarios del sistema.
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
                           usuarios_id SERIAL PRIMARY KEY,
                           roles_id INT REFERENCES roles(roles_id) ON DELETE SET NULL,
                           nombre VARCHAR(255) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE usuarios (
 );
 
 -- Contiene los detalles de configuración para cada torneo.
-CREATE TABLE torneos (
+CREATE TABLE IF NOT EXISTS torneos (
                          torneos_id SERIAL PRIMARY KEY,
                          nombre VARCHAR(255) NOT NULL,
                          tipo_formato VARCHAR(50) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE torneos (
 );
 
 -- Representa los equipos que participan en los torneos.
-CREATE TABLE equipos (
+CREATE TABLE IF NOT EXISTS equipos (
                          equipos_id SERIAL PRIMARY KEY,
                          torneos_id INT REFERENCES torneos(torneos_id) ON DELETE SET NULL,
                          id_capitan INT REFERENCES usuarios(usuarios_id) ON DELETE SET NULL,
@@ -37,7 +37,7 @@ CREATE TABLE equipos (
 );
 
 -- Almacena la información de los jugadores asociados a equipos específicos.
-CREATE TABLE jugadores (
+CREATE TABLE IF NOT EXISTS jugadores (
                            jugadores_id SERIAL PRIMARY KEY,
                            equipos_id INT REFERENCES equipos(equipos_id) ON DELETE CASCADE,
                            nombre VARCHAR(255) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE jugadores (
 );
 
 -- Registra el calendario y los resultados de los partidos del torneo.
-CREATE TABLE partidos (
+CREATE TABLE IF NOT EXISTS partidos (
                           partidos_id SERIAL PRIMARY KEY,
                           torneos_id INT REFERENCES torneos(torneos_id) ON DELETE CASCADE,
                           id_equipo_local INT REFERENCES equipos(equipos_id) ON DELETE CASCADE,
@@ -56,7 +56,7 @@ CREATE TABLE partidos (
 );
 
 -- Rastrea las métricas de rendimiento de los equipos dentro de un torneo específico.
-CREATE TABLE tabla_posiciones (
+CREATE TABLE IF NOT EXISTS tabla_posiciones (
                                   tabla_posiciones_id SERIAL PRIMARY KEY,
                                   torneos_id INT REFERENCES torneos(torneos_id) ON DELETE CASCADE,
                                   equipos_id INT REFERENCES equipos(equipos_id) ON DELETE CASCADE,
