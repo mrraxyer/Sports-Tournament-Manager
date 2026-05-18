@@ -10,7 +10,6 @@ import java.util.Optional;
  * Repositorio para la entidad TablaPosiciones.
  * Hereda todas las operaciones CRUD genéricas de BaseRepository<T, ID>.
  *
- * Incluye métodos específicos de TablaPosiciones para búsquedas comunes.
  */
 public interface TablaPosicionesRepository extends BaseRepository<TablaPosiciones, Integer> {
 
@@ -21,7 +20,7 @@ public interface TablaPosicionesRepository extends BaseRepository<TablaPosicione
      * @param torneo el torneo
      * @return lista de posiciones ordenadas por puntos (descendente) y diferencia goles
      */
-    List<TablaPosiciones> findByTorneoOrderByPuntosDescGolesFavorDescGolesContraAsc(Torneo torneo);
+    List<TablaPosiciones> findByTorneoOrderByPuntosDescGolesAFavorDescGolesEnContraAsc(Torneo torneo);
 
     /**
      * Busca la posición de un equipo en un torneo específico.
