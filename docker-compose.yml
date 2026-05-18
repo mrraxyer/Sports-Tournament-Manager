@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sports-tournament-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-deportivos}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
+      POSTGRES_INITDB_ARGS: "-c max_connections=100"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+    networks:
+      - sports-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-deportivos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sports-tournament-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-deportivos}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      MASTER_USERNAME: ${MASTER_USERNAME:-admin}
+      MASTER_EMAIL: ${MASTER_EMAIL:-admin@sportstournament.com}
+      MASTER_PASSWORD: ${MASTER_PASSWORD:-admin123}
+      JAVA_OPTS: ${JAVA_OPTS:-"-Xmx512m -Xms256m"}
+    ports:
+      - "8080:8080"
+    networks:
+      - sports-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  sports-network:
+    driver: bridge
+
