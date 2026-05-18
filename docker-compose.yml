@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: sports-tournament-db
     environment:
-      POSTGRES_DB: ${DB_NAME:-deportivos}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-root}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME is required}
+      POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_INITDB_ARGS: "-c max_connections=100"
     ports:
       - "5432:5432"
@@ -17,7 +15,7 @@ services:
     networks:
       - sports-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-deportivos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:?DB_USERNAME is required} -d ${DB_NAME:?DB_NAME is required}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,15 +31,30 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-deportivos}
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-root}
-      MASTER_USERNAME: ${MASTER_USERNAME:-admin}
-      MASTER_EMAIL: ${MASTER_EMAIL:-admin@sportstournament.com}
-      MASTER_PASSWORD: ${MASTER_PASSWORD:-admin123}
-      JAVA_OPTS: ${JAVA_OPTS:-"-Xmx512m -Xms256m"}
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      MASTER_USERNAME: ${MASTER_USERNAME:?MASTER_USERNAME is required}
+      MASTER_EMAIL: ${MASTER_EMAIL:?MASTER_EMAIL is required}
+      MASTER_PASSWORD: ${MASTER_PASSWORD:?MASTER_PASSWORD is required}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
     ports:
       - "8080:8080"
+    networks:
+      - sports-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${FRONTEND_VITE_API_BASE_URL:?FRONTEND_VITE_API_BASE_URL is required}
+    container_name: sports-tournament-frontend
+    depends_on:
+      - app
+    ports:
+      - "5173:80"
     networks:
       - sports-network
     restart: unless-stopped

@@ -30,6 +30,9 @@ public class InitializationService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     @Value("${app.init.master-username:admin}")
     private String masterUsername;
 
@@ -89,11 +92,9 @@ public class InitializationService {
      * Lee las credenciales desde las variables de entorno/propiedades.
      */
     private void createMasterUser() {
-        // Verificar si el usuario ya existe
         Optional<Usuario> existingUser = usuarioRepository.findByCorreo(masterEmail);
-
         if (existingUser.isPresent()) {
-            logger.debug("Usuario maestro ya existe: {}", masterEmail);
+            migrateLegacyMasterPassword(existingUser.get());
             return;
         }
 
@@ -107,13 +108,37 @@ public class InitializationService {
 
         // Crear el usuario maestro
         Usuario masterUser = new Usuario();
-        masterUser.setNombre("Master Admin");
+        masterUser.setNombre(masterUsername);
         masterUser.setCorreo(masterEmail);
-        masterUser.setContrasena(masterPassword); // Se encripta automáticamente en UsuarioService.save()
+        // UsuarioService aplica PasswordEncoder para almacenar el hash.
+        masterUser.setContrasena(masterPassword);
         masterUser.setRol(adminRol.get());
 
-        usuarioRepository.save(masterUser);
+        usuarioService.save(masterUser);
         logger.info("Usuario maestro creado: {} ({})", masterEmail, masterUsername);
+    }
+
+    /**
+     * Repara instalaciones previas donde el usuario maestro pudo guardarse sin hash.
+     * Solo migra si la contraseña actual no parece SHA-1.
+     */
+    private void migrateLegacyMasterPassword(Usuario existingMasterUser) {
+        String currentPassword = existingMasterUser.getContrasena();
+        if (isProbablySha1(currentPassword)) {
+            logger.debug("Usuario maestro ya existe y su contraseña está hasheada: {}", masterEmail);
+            return;
+        }
+
+        existingMasterUser.setContrasena(masterPassword);
+        usuarioService.save(existingMasterUser);
+        logger.warn("Usuario maestro existente migrado a contraseña hasheada desde variable de entorno: {}", masterEmail);
+    }
+
+    private boolean isProbablySha1(String value) {
+        if (value == null || value.length() != 40) {
+            return false;
+        }
+        return value.matches("^[0-9a-fA-F]{40}$");
     }
 }
 

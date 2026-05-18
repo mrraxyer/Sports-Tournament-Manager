@@ -21,17 +21,8 @@ COPY --from=builder /build/target/SportsTournamentManager-*.jar app.jar
 # Expose port
 EXPOSE 8080
 
-# Set environment variables with defaults
-ENV DB_HOST=postgres \
-    DB_PORT=5432 \
-    DB_NAME=deportivos \
-    DB_USERNAME=postgres \
-    DB_PASSWORD=root \
-    MASTER_USERNAME=admin \
-    MASTER_EMAIL=admin@sportstournament.com \
-    MASTER_PASSWORD=admin123 \
-    JAVA_OPTS="-Xmx512m -Xms256m"
+# Set Java options (optional, can be adjusted)
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 
