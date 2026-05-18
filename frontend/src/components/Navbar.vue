@@ -29,6 +29,10 @@ function handleLogout() {
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Torneos
           </router-link>
+          <router-link to="/team-management"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Equipos
+          </router-link>
         </div>
       </div>
       <div class="flex items-center gap-4">

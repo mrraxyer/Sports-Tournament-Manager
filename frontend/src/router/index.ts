@@ -21,6 +21,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/team-management',
+    name: 'TeamManagement',
+    component: () => import('../pages/TeamManagement.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     redirect: () => {
       const auth = useAuthStore()
