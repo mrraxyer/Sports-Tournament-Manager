@@ -53,6 +53,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/usuarios", "/api/usuarios/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/torneos", "/api/torneos/**", "/api/partidos/**", "/api/tabla-posiciones/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )

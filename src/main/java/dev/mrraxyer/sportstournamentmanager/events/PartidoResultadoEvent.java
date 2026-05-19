@@ -4,7 +4,8 @@ import org.springframework.context.ApplicationEvent;
 
 /**
  * Evento publicado cuando se registra o actualiza el resultado de un partido.
- * Este evento es escuchado por observadores como el servicio de tabla de posiciones,
+ * Este evento es escuchado por observadores como el servicio de tabla de
+ * posiciones,
  * permitiendo la actualización reactiva de estadísticas.
  */
 public class PartidoResultadoEvent extends ApplicationEvent {
@@ -15,21 +16,23 @@ public class PartidoResultadoEvent extends ApplicationEvent {
     private final Integer equipoVisitanteId;
     private final Integer golesLocal;
     private final Integer golesVisitante;
+    private final String grupo;
 
     /**
      * Crea un nuevo evento de resultado de partido
      *
-     * @param source Objeto que publica el evento
-     * @param partidoId ID del partido
-     * @param torneoId ID del torneo
-     * @param equipoLocalId ID del equipo local
+     * @param source            Objeto que publica el evento
+     * @param partidoId         ID del partido
+     * @param torneoId          ID del torneo
+     * @param equipoLocalId     ID del equipo local
      * @param equipoVisitanteId ID del equipo visitante
-     * @param golesLocal Goles del equipo local
-     * @param golesVisitante Goles del equipo visitante
+     * @param golesLocal        Goles del equipo local
+     * @param golesVisitante    Goles del equipo visitante
      */
     public PartidoResultadoEvent(Object source, Integer partidoId, Integer torneoId,
-                                 Integer equipoLocalId, Integer equipoVisitanteId,
-                                 Integer golesLocal, Integer golesVisitante) {
+            Integer equipoLocalId, Integer equipoVisitanteId,
+            Integer golesLocal, Integer golesVisitante,
+            String grupo) {
         super(source);
         this.partidoId = partidoId;
         this.torneoId = torneoId;
@@ -37,6 +40,7 @@ public class PartidoResultadoEvent extends ApplicationEvent {
         this.equipoVisitanteId = equipoVisitanteId;
         this.golesLocal = golesLocal;
         this.golesVisitante = golesVisitante;
+        this.grupo = grupo;
     }
 
     // Getters
@@ -64,6 +68,10 @@ public class PartidoResultadoEvent extends ApplicationEvent {
         return golesVisitante;
     }
 
+    public String getGrupo() {
+        return grupo;
+    }
+
     @Override
     public String toString() {
         return "PartidoResultadoEvent{" +
@@ -73,7 +81,7 @@ public class PartidoResultadoEvent extends ApplicationEvent {
                 ", equipoVisitanteId=" + equipoVisitanteId +
                 ", golesLocal=" + golesLocal +
                 ", golesVisitante=" + golesVisitante +
+                ", grupo=" + grupo +
                 '}';
     }
 }
-

@@ -20,6 +20,24 @@ export function useTeams() {
     capitanId: null as number | null,
   })
 
+  const selectedTorneoId = ref<number | null>(null)
+
+  async function fetchTeamsByTorneo(torneoId: number | null) {
+    loading.fetch = true
+    try {
+      let e: Equipo[] = []
+      if (torneoId) {
+        e = await teamAPI.listByTorneo(torneoId)
+      } else {
+        e = await teamAPI.list()
+      }
+      equipos.length = 0
+      equipos.push(...e)
+    } finally {
+      loading.fetch = false
+    }
+  }
+
   async function fetchAll() {
     loading.fetch = true
     try {
@@ -38,6 +56,7 @@ export function useTeams() {
       loading.fetch = false
     }
   }
+
 
   function openDeleteConfirm(equipo: Equipo) {
     deletingEquipo.value = equipo
@@ -123,5 +142,7 @@ export function useTeams() {
     clearFeedback,
     openDeleteConfirm,
     confirmDelete,
+    selectedTorneoId,
+    fetchTeamsByTorneo,
   }
 }

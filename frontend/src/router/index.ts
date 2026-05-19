@@ -27,6 +27,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tournaments/:torneoId/matches',
+    name: 'MatchSchedule',
+    component: () => import('../pages/MatchSchedulePage.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/admin/matches',
+    name: 'AdminMatchManager',
+    component: () => import('../pages/AdminMatchManagerPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     redirect: () => {
       const auth = useAuthStore()

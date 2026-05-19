@@ -21,8 +21,10 @@ import java.util.Optional;
 /**
  * Servicio de Tabla de Posiciones
  *
- * Extiende BaseService<TablaPosiciones, Integer> para herdar todas las operaciones CRUD genéricas.
- * Implementa el patrón Observador mediante @EventListener para escuchar eventos de resultados de partidos
+ * Extiende BaseService<TablaPosiciones, Integer> para herdar todas las
+ * operaciones CRUD genéricas.
+ * Implementa el patrón Observador mediante @EventListener para escuchar eventos
+ * de resultados de partidos
  * y hace automática la actualización reactiva de estadísticas.
  */
 @Service
@@ -46,7 +48,8 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
 
     /**
      * Listener que escucha eventos de resultado de partido.
-     * Cuando se publica un PartidoResultadoEvent, este método es invocado automáticamente
+     * Cuando se publica un PartidoResultadoEvent, este método es invocado
+     * automáticamente
      * para actualizar reactivamente la tabla de posiciones.
      *
      * @param evento el evento publicado
@@ -84,21 +87,23 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
 
             if (!equipoLocalOpt.isPresent() || !equipoVisitanteOpt.isPresent()) {
                 logger.warn("Uno o más equipos no encontrados. Local ID: {}, Visitante ID: {}",
-                    equipoLocalId, equipoVisitanteId);
+                        equipoLocalId, equipoVisitanteId);
                 return;
             }
 
             Equipo equipoLocal = equipoLocalOpt.get();
             Equipo equipoVisitante = equipoVisitanteOpt.get();
 
+            String grupo = evento.getGrupo();
+
             // Actualizar estadísticas del equipo local
-            actualizarEstadisticasEquipo(torneo, equipoLocal, golesLocal, golesVisitante);
+            actualizarEstadisticasEquipo(torneo, equipoLocal, golesLocal, golesVisitante, grupo);
 
             // Actualizar estadísticas del equipo visitante
-            actualizarEstadisticasEquipo(torneo, equipoVisitante, golesVisitante, golesLocal);
+            actualizarEstadisticasEquipo(torneo, equipoVisitante, golesVisitante, golesLocal, grupo);
 
             logger.info("Estadísticas actualizadas exitosamente para el partido de {} vs {}",
-                equipoLocal.getNombre(), equipoVisitante.getNombre());
+                    equipoLocal.getNombre(), equipoVisitante.getNombre());
 
         } catch (Exception e) {
             logger.error("Error procesando evento de resultado de partido: {}", evento, e);
@@ -110,17 +115,17 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
      * Actualiza las estadísticas de un equipo para un torneo específico
      * Recalcula puntos basado en el resultado (3-victoria, 1-empate, 0-derrota)
      *
-     * @param torneo el torneo
-     * @param equipo el equipo
-     * @param golesAFavor goles marcados por el equipo
+     * @param torneo        el torneo
+     * @param equipo        el equipo
+     * @param golesAFavor   goles marcados por el equipo
      * @param golesEnContra goles recibidos por el equipo
      */
     private void actualizarEstadisticasEquipo(Torneo torneo, Equipo equipo,
-                                              Integer golesAFavor, Integer golesEnContra) {
+            Integer golesAFavor, Integer golesEnContra,
+            String grupo) {
 
         // Obtener o crear la entrada en tabla de posiciones
-        Optional<TablaPosiciones> tablaPosOpt =
-            tablaPosicionesRepository.findByTorneoAndEquipo(torneo, equipo);
+        Optional<TablaPosiciones> tablaPosOpt = tablaPosicionesRepository.findByTorneoAndEquipo(torneo, equipo);
 
         TablaPosiciones tablaPosiciones;
         if (tablaPosOpt.isPresent()) {
@@ -133,6 +138,8 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
             tablaPosiciones.setPuntos(0);
             tablaPosiciones.setGolesAFavor(0);
             tablaPosiciones.setGolesEnContra(0);
+            // asignar grupo si viene del evento (útil para fase de grupos)
+            tablaPosiciones.setGrupo(grupo);
         }
 
         // Incrementar partidos jugados
@@ -146,15 +153,24 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
         int puntosAñadidos = calcularPuntos(golesAFavor, golesEnContra);
         tablaPosiciones.setPuntos(tablaPosiciones.getPuntos() + puntosAñadidos);
 
+        // Actualizar victorias/empates/derrotas
+        if (golesAFavor > golesEnContra) {
+            tablaPosiciones.setVictorias(tablaPosiciones.getVictorias() + 1);
+        } else if (golesAFavor.equals(golesEnContra)) {
+            tablaPosiciones.setEmpates(tablaPosiciones.getEmpates() + 1);
+        } else {
+            tablaPosiciones.setDerrotas(tablaPosiciones.getDerrotas() + 1);
+        }
+
         // Guardar cambios
         tablaPosicionesRepository.save(tablaPosiciones);
 
         logger.debug("Estadísticas de {} actualizadas: {} partidos, {} puntos, {}-{} goles",
-            equipo.getNombre(),
-            tablaPosiciones.getPartidosJugados(),
-            tablaPosiciones.getPuntos(),
-            tablaPosiciones.getGolesAFavor(),
-            tablaPosiciones.getGolesEnContra());
+                equipo.getNombre(),
+                tablaPosiciones.getPartidosJugados(),
+                tablaPosiciones.getPuntos(),
+                tablaPosiciones.getGolesAFavor(),
+                tablaPosiciones.getGolesEnContra());
     }
 
     /**
@@ -163,7 +179,7 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
      * - 1 punto por empates
      * - 0 puntos por derrotas
      *
-     * @param golesAFavor goles marcados por el equipo
+     * @param golesAFavor   goles marcados por el equipo
      * @param golesEnContra goles recibidos por el equipo
      * @return puntos asignados
      */
@@ -176,5 +192,19 @@ public class TablaPosicionesService extends BaseService<TablaPosiciones, Integer
             return 0; // Derrota
         }
     }
-}
 
+    /**
+     * Obtiene todas las posiciones de un torneo por ID.
+     * Útil para consultar la clasificación completa y filtrar equipos calificados.
+     *
+     * @param torneosId el ID del torneo
+     * @return lista de posiciones del torneo
+     */
+    public java.util.List<TablaPosiciones> findByTorneo(Integer torneosId) {
+        Optional<Torneo> torneoOpt = torneoRepository.findById(torneosId);
+        if (!torneoOpt.isPresent()) {
+            return new java.util.ArrayList<>();
+        }
+        return tablaPosicionesRepository.findByTorneo(torneoOpt.get());
+    }
+}

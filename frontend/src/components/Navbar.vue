@@ -21,17 +21,21 @@ function handleLogout() {
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-6">
         <h1 class="text-lg font-semibold text-gray-900">Sports Tournament Manager</h1>
-        <div v-if="isAdmin" class="flex gap-4">
-          <router-link to="/dashboard" class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+        <div v-if="auth.isAuthenticated" class="flex gap-4">
+          <router-link v-if="isAdmin" to="/dashboard" class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Dashboard
           </router-link>
           <router-link to="/tournaments"
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Torneos
           </router-link>
-          <router-link to="/team-management"
+          <router-link v-if="isAdmin" to="/team-management"
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Equipos
+          </router-link>
+          <router-link v-if="isAdmin" to="/admin/matches"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Partidos
           </router-link>
         </div>
       </div>
