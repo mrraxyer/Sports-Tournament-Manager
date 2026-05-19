@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: ${DB_USERNAME:?DB_USERNAME is required}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_INITDB_ARGS: "-c max_connections=100"
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/sql:/docker-entrypoint-initdb.d
@@ -38,8 +36,6 @@ services:
       MASTER_EMAIL: ${MASTER_EMAIL:?MASTER_EMAIL is required}
       MASTER_PASSWORD: ${MASTER_PASSWORD:?MASTER_PASSWORD is required}
       JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
-    ports:
-      - "8080:8080"
     networks:
       - sports-network
     restart: unless-stopped
@@ -55,9 +51,6 @@ services:
       - app
     ports:
       - "5173:80"
-    volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/dist:/app/dist
     networks:
       - sports-network
     restart: unless-stopped
