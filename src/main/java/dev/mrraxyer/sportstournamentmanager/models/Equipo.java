@@ -30,7 +30,6 @@ public class Equipo {
     @Column(nullable = false, length = 255)
     private String nombre;
     
-    @JsonIgnore
     @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Jugador> jugadores;
 
