@@ -100,35 +100,29 @@ public class UsuarioController {
         }
 
         Optional<Usuario> existente = usuarioService.findByCorreo(dto.getCorreo());
-        Usuario usuario;
-        boolean isCreated = false;
 
         if (existente.isPresent()) {
-            usuario = existente.get();
-            usuario.setNombre(dto.getNombre());
-            if (dto.getContrasena() != null && !dto.getContrasena().trim().isEmpty()) {
-                usuario.setContrasena(dto.getContrasena());
-            }
-            if (rol != null) {
-                usuario.setRol(rol);
-            }
-        } else {
-            usuario = new Usuario();
-            usuario.setNombre(dto.getNombre());
-            usuario.setCorreo(dto.getCorreo());
-            usuario.setContrasena(dto.getContrasena());
-            usuario.setRol(rol);
-            isCreated = true;
+            ApiResponse<Usuario> response = ApiResponseBuilder
+                .<Usuario>error("El correo ya está asociado a otro usuario", HttpStatus.BAD_REQUEST.value())
+                .path("/api/usuarios/crear")
+                .build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
+        Usuario usuario = new Usuario();
+        usuario.setNombre(dto.getNombre());
+        usuario.setCorreo(dto.getCorreo());
+        usuario.setContrasena(dto.getContrasena());
+        usuario.setRol(rol);
+        
         Usuario usuarioGuardado = usuarioService.save(usuario);
 
         ApiResponse<Usuario> response = ApiResponseBuilder
             .created(usuarioGuardado)
-            .message(isCreated ? "Usuario creado exitosamente" : "Usuario actualizado exitosamente")
+            .message("Usuario creado exitosamente")
             .path("/api/usuarios/crear")
             .build();
-        return ResponseEntity.status(isCreated ? HttpStatus.CREATED : HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
@@ -136,6 +130,14 @@ public class UsuarioController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<Usuario>> crearUsuario(@RequestBody Usuario usuario) {
+        if (usuarioService.findByCorreo(usuario.getCorreo()).isPresent()) {
+            ApiResponse<Usuario> response = ApiResponseBuilder
+                .<Usuario>error("El correo ya está asociado a otro usuario", HttpStatus.BAD_REQUEST.value())
+                .path("/api/usuarios")
+                .build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
         Usuario usuarioGuardado = usuarioService.save(usuario);
 
         ApiResponse<Usuario> response = ApiResponseBuilder

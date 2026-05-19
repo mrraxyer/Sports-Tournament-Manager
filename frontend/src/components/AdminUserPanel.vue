@@ -46,6 +46,20 @@ const form = reactive<FormData>({
 const showModal = ref(false)
 const isAdmin = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'ADMIN')
 
+const rolNombres: Record<string, string> = {
+  ADMIN: 'Administrador',
+  USER: 'Usuario',
+  REFEREE: 'Árbitro',
+  COACH: 'Entrenador',
+  TEAM_CAPTAIN: 'Capitán de Equipo'
+}
+
+function formatRol(nombre: string | undefined): string {
+  if (!nombre) return 'Sin rol'
+  const upper = nombre.toUpperCase()
+  return rolNombres[upper] || nombre
+}
+
 async function fetchUsuarios() {
   loading.fetch = true
   try {
@@ -215,7 +229,7 @@ onMounted(() => {
               <td class="px-6 py-3 text-sm text-gray-900">{{ usuario.nombre }}</td>
               <td class="px-6 py-3 text-sm text-gray-700">{{ usuario.correo }}</td>
               <td class="px-6 py-3 text-sm text-gray-700 font-medium">
-                {{ usuario.rol?.nombre ?? 'Sin rol' }}
+                {{ formatRol(usuario.rol?.nombre) }}
               </td>
               <td class="px-6 py-3 text-center">
                 <button
@@ -259,7 +273,7 @@ onMounted(() => {
             class="mt-2 w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1">
             <option :value="null" disabled>Selecciona un rol</option>
             <option v-for="rol in roles" :key="rol.rolesId" :value="rol.rolesId">
-              {{ rol.nombre }}
+              {{ formatRol(rol.nombre) }}
             </option>
           </select>
         </label>
