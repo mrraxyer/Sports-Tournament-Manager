@@ -34,10 +34,10 @@ public class TablaPosiciones {
     @Column(nullable = false)
     private Integer puntos = 0;
 
-    @Column(nullable = false)
+    @Column(name = "goles_a_favor", nullable = false)
     private Integer golesAFavor = 0;
 
-    @Column(nullable = false)
+    @Column(name = "goles_en_contra", nullable = false)
     private Integer golesEnContra = 0;
 }
 

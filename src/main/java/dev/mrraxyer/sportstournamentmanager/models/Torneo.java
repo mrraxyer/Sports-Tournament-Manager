@@ -1,5 +1,6 @@
 package dev.mrraxyer.sportstournamentmanager.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,12 +32,15 @@ public class Torneo {
     @Column(nullable = false, name = "fecha_inicio")
     private LocalDate fechaInicio;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Equipo> equipos;
-    
+
+    @JsonIgnore
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Partido> partidos;
-    
+
+    @JsonIgnore
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TablaPosiciones> tablasPositiones;
 }
