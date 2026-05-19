@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth'
 import { useTeams } from '../composables/useTeams'
 import Navbar from '../components/Navbar.vue'
 import PlayerRoster from '../components/PlayerRoster.vue'
+import ConfirmModal from '../components/modals/ConfirmModal.vue'
 
 const auth = useAuthStore()
 const {
@@ -169,27 +170,14 @@ onMounted(() => {
       :team-name="selectedTeamName" @close="closePlayerRoster" />
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-md">
-        <div class="p-6 border-b border-gray-300">
-          <h3 class="text-xl font-semibold text-gray-900">Confirmar Eliminación</h3>
-        </div>
-        <div class="p-6">
-          <p class="text-gray-700 mb-1">¿Eliminar el equipo <span class="font-bold">{{ deletingEquipo?.nombre }}</span>?
-          </p>
-          <p class="text-gray-500 text-sm">Se eliminarán también todos sus jugadores y partidos asociados.</p>
-        </div>
-        <div class="border-t border-gray-300 p-6 flex justify-end gap-3">
-          <button @click="showDeleteConfirm = false" :disabled="loading.delete"
-            class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-60 cursor-pointer font-medium text-sm">
-            Cancelar
-          </button>
-          <button @click="confirmDelete" :disabled="loading.delete"
-            class="px-4 py-2 bg-red-600 text-white border border-red-600 rounded hover:bg-red-700 disabled:opacity-60 cursor-pointer font-medium text-sm">
-            {{ loading.delete ? 'Eliminando…' : 'Eliminar' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      v-model="showDeleteConfirm"
+      title="Confirmar Eliminación"
+      :message="`¿Eliminar el equipo ${deletingEquipo?.nombre}?`"
+      detail="Se eliminarán también todos sus jugadores y partidos asociados."
+      confirm-label="Eliminar"
+      :loading="loading.delete"
+      @confirm="confirmDelete"
+    />
   </div>
 </template>
