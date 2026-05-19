@@ -7,85 +7,61 @@ import Navbar from '../components/Navbar.vue'
 import TournamentBracketRoundRobin from '../components/TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from '../components/TournamentBracketElimination.vue'
 import TournamentBracketGroups from '../components/TournamentBracketGroups.vue'
-import { tournamentAPI } from '../api/matches'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const torneoId = computed(() => Number(route.params.torneoId))
-const isAdmin = computed(() => auth.session?.usuario.rol === 'ADMIN')
 
-const {
-  partidos,
-  standings,
-  loading,
-  feedback,
-  fetchAll,
-} = useMatches()
+const { partidos, standings, loading, fetchAll } = useMatches()
 
-const selectedTab = ref<'matches' | 'groups'>('matches')
-
-const clasificadosInput = ref<number>(2)
+const openMatches = ref(true)
+const openStandings = ref(true)
+const openBracket = ref(true)
+const standingsTab = ref<'global' | 'groups'>('global')
 
 const tournamentName = computed(() =>
   partidos.length > 0 ? partidos[0].torneo.nombre : `Torneo ${torneoId.value}`
 )
 
-/** Verdadero cuando el torneo es de formato round-robin o liga. */
 const isRoundRobin = computed(() => {
-  const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
-  return fmt.includes('round') || fmt.includes('liga') || fmt.includes('robin')
+  const f = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
+  return f.includes('round') || f.includes('liga') || f.includes('robin')
 })
-
 const isGroupFormat = computed(() => {
-  const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
-  return fmt.includes('grupo') || fmt.includes('grupos')
+  const f = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
+  return f.includes('grupo') || f.includes('grupos')
 })
-
-const hasGroupMatches = computed(() => {
-  return partidos.some(p => p.grupo != null)
-})
-
+const hasGroupMatches = computed(() => partidos.some(p => p.grupo != null))
 const eliminationMatches = computed(() => partidos.filter(p => p.bracketIndex != null))
 const regularMatches = computed(() => partidos.filter(p => p.bracketIndex == null))
 
 const groupedStandings = computed(() => {
   const map = new Map<string, typeof standings>()
-  standings.forEach((s) => {
-    const g = s.grupo ?? 'A'
+  standings.forEach(s => {
+    const g = s.grupo ?? 'General'
     if (!map.has(g)) map.set(g, [])
     map.get(g)!.push(s)
   })
-  // convert to array of [group, rows]
-  return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+  return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
 })
 
-const allGroupMatchesPlayed = computed(() => {
-  const groupMatches = partidos.filter((p) => p.grupo != null)
-  if (groupMatches.length === 0) return false
-  return groupMatches.every((p) => p.jugado === true)
-})
+const sortedStandings = computed(() =>
+  [...standings].sort((a, b) =>
+    b.puntos - a.puntos ||
+    (b.golesAFavor - b.golesEnContra) - (a.golesAFavor - a.golesEnContra)
+  )
+)
 
-async function advanceToElimination() {
-  try {
-    loading.fetch = true
-    await tournamentAPI.advanceToElimination(torneoId.value, clasificadosInput.value)
-    await fetchAll(torneoId.value)
-    // switch to matches view after advancing
-    selectedTab.value = 'matches'
-  } catch (e) {
-    // bubble to feedback in useMatches via fetchAll
-  } finally {
-    loading.fetch = false
-  }
-}
+const totalPlayed = computed(() => partidos.filter(p => p.jugado).length)
+const totalPending = computed(() => partidos.filter(p => !p.jugado).length)
 
 const formatDate = (date: string) => {
   if (!date) return '-'
-  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(date)
-  )
+  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date))
 }
+
+function exportPDF() { window.print() }
 
 onMounted(() => {
   auth.hydrateSession()
@@ -93,207 +69,241 @@ onMounted(() => {
 })
 </script>
 
+<style>
+@media print {
+
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .print-section {
+    break-inside: avoid;
+  }
+}
+</style>
+
 <template>
   <div class="min-h-screen bg-gray-50">
-    <Navbar />
+    <Navbar class="no-print" />
 
-    <main class="max-w-6xl mx-auto px-6 py-8 space-y-8">
-      <button type="button" @click="router.back()"
-        class="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition-colors">
-        ← Volver
-      </button>
+    <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
-      <!-- Matches Section -->
-      <section class="bg-white border border-gray-300 rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-300 bg-gray-50">
-          <h2 class="text-xl font-semibold text-gray-900">Partidos — {{ tournamentName }}</h2>
+      <!-- Page header -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <button type="button" @click="router.back()"
+            class="no-print flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-3">
+            ← Volver
+          </button>
+          <h1 class="text-2xl font-semibold text-gray-900">{{ tournamentName }}</h1>
+          <p class="text-sm text-gray-500 mt-0.5">{{ partidos[0]?.torneo?.tipoFormato ?? '' }}</p>
         </div>
 
-        <div v-if="loading.fetch" class="px-6 py-8 text-center text-gray-600">
-          Cargando partidos…
-        </div>
-
-        <div v-else-if="partidos.length === 0" class="px-6 py-8 text-center text-gray-600">
-          No hay partidos programados para este torneo
-        </div>
-
-        <div v-else class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="bg-gray-50 border-b border-gray-300">
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">#</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Local</th>
-                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Resultado</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Visitante</th>
-                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="partido in partidos" :key="partido.partidosId"
-                class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-3 text-sm text-gray-500">{{ partido.partidosId }}</td>
-                <td class="px-6 py-3 text-sm font-medium text-gray-900">
-                  {{ partido.equipoLocal?.nombre ?? 'TBD' }}
-                </td>
-                <td class="px-6 py-3 text-center">
-                  <span class="text-sm font-semibold text-gray-900">{{ partido.golesLocal }} - {{ partido.golesVisitante
-                    }}</span>
-                </td>
-                <td class="px-6 py-3 text-sm text-gray-900">
-                  {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
-                </td>
-                <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(partido.fechaPartido) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="feedback.message" :class="{
-          'bg-green-50 border-green-300 text-green-700': feedback.type === 'success',
-          'bg-red-50 border-red-300 text-red-700': feedback.type === 'error',
-        }" class="mx-6 my-4 px-4 py-3 rounded border text-sm">
-          {{ feedback.message }}
-        </div>
-      </section>
-
-      <!-- Standings / Groups Section -->
-      <section class="bg-white border border-gray-300 rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-300 bg-gray-50 flex items-center justify-between">
-          <h3 class="text-xl font-semibold text-gray-900">Tabla de Posiciones</h3>
-          <div class="flex items-center gap-3">
-            <button @click="selectedTab = 'matches'"
-              :class="selectedTab === 'matches' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'"
-              class="px-3 py-1 text-sm rounded border">
-              Partidos
-            </button>
-            <button v-if="isGroupFormat" @click="selectedTab = 'groups'"
-              :class="selectedTab === 'groups' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'"
-              class="px-3 py-1 text-sm rounded border">
-              Grupos
-            </button>
+        <div class="no-print flex items-center gap-6">
+          <div class="text-center">
+            <div class="text-xl font-bold text-gray-900">{{ totalPlayed }}</div>
+            <div class="text-xs text-gray-500">Jugados</div>
           </div>
+          <div class="text-center">
+            <div class="text-xl font-bold text-gray-900">{{ totalPending }}</div>
+            <div class="text-xs text-gray-500">Pendientes</div>
+          </div>
+          <button v-if="partidos.length > 0" @click="exportPDF"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded hover:bg-blue-700 transition-colors">
+            Exportar PDF
+          </button>
         </div>
+      </div>
 
-        <div v-if="loading.fetch" class="px-6 py-8 text-center text-gray-600">
-          Cargando tabla…
-        </div>
+      <!-- Loading -->
+      <div v-if="loading.fetch" class="py-16 text-center text-gray-600">
+        Cargando partidos…
+      </div>
 
-        <div v-else>
-          <div v-if="selectedTab === 'matches'">
-            <div v-if="standings.length === 0" class="px-6 py-8 text-center text-gray-600">
-              No hay tabla de posiciones disponible
+      <template v-else>
+
+        <!-- PARTIDOS -->
+        <section class="print-section bg-white border border-gray-300 rounded overflow-hidden">
+          <button @click="openMatches = !openMatches"
+            class="no-print w-full flex items-center justify-between px-6 py-4 border-b border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+            <h2 class="text-lg font-semibold text-gray-900">
+              Partidos
+              <span class="ml-2 text-sm font-normal text-gray-500">({{ partidos.length }})</span>
+            </h2>
+            <span class="text-gray-500 text-sm">{{ openMatches ? '▲' : '▼' }}</span>
+          </button>
+          <div class="px-6 py-3 border-b border-gray-300 bg-gray-50 print:block hidden">
+            <h2 class="text-lg font-semibold text-gray-900">Partidos</h2>
+          </div>
+
+          <div v-show="openMatches">
+            <div v-if="partidos.length === 0" class="px-6 py-8 text-center text-gray-600">
+              No hay partidos programados para este torneo.
             </div>
 
             <div v-else class="overflow-x-auto">
-              <table class="w-full">
+              <table class="w-full text-sm">
                 <thead>
                   <tr class="bg-gray-50 border-b border-gray-300">
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Pos</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Equipo</th>
-                    <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">PJ</th>
-                    <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">GF</th>
-                    <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">GC</th>
-                    <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Pts</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-900">Fase</th>
+                    <th class="px-6 py-3 text-right font-semibold text-gray-900">Local</th>
+                    <th class="px-6 py-3 text-center font-semibold text-gray-900">Resultado</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-900">Visitante</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-900">Fecha</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(standing, index) in standings" :key="standing.tablaPosicionesId"
-                    class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-3 text-sm font-semibold text-gray-900">{{ index + 1 }}</td>
-                    <td class="px-6 py-3 text-sm font-medium text-gray-900">
-                      {{ standing.equipo.nombre }}
+                  <tr v-for="partido in partidos" :key="partido.partidosId"
+                    class="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                    :class="partido.jugado ? 'bg-green-50 hover:bg-green-100' : ''">
+                    <td class="px-6 py-3 text-gray-500">
+                      {{ partido.fase ?? (partido.grupo ? `Grupo ${partido.grupo}` : '-') }}
                     </td>
-                    <td class="px-6 py-3 text-center text-sm text-gray-700">
-                      {{ standing.partidosJugados }}
+                    <td class="px-6 py-3 text-right font-medium text-gray-900">
+                      {{ partido.equipoLocal?.nombre ?? 'TBD' }}
                     </td>
-                    <td class="px-6 py-3 text-center text-sm text-gray-700">
-                      {{ standing.golesAFavor }}
+                    <td class="px-6 py-3 text-center">
+                      <span v-if="partido.jugado" class="font-bold text-gray-900">
+                        {{ partido.golesLocal }} - {{ partido.golesVisitante }}
+                      </span>
+                      <span v-else class="text-gray-400">vs</span>
                     </td>
-                    <td class="px-6 py-3 text-center text-sm text-gray-700">
-                      {{ standing.golesEnContra }}
+                    <td class="px-6 py-3 font-medium text-gray-900">
+                      {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
                     </td>
-                    <td class="px-6 py-3 text-center text-sm font-bold text-gray-900">
-                      {{ standing.puntos }}
-                    </td>
+                    <td class="px-6 py-3 text-gray-600">{{ formatDate(partido.fechaPartido) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
+        </section>
 
-          <div v-else-if="selectedTab === 'groups'">
-            <div v-if="groupedStandings.length === 0" class="px-6 py-8 text-center text-gray-600">
-              No hay grupos disponibles
+        <!-- TABLA DE POSICIONES -->
+        <section v-if="standings.length > 0"
+          class="print-section bg-white border border-gray-300 rounded overflow-hidden">
+          <button @click="openStandings = !openStandings"
+            class="no-print w-full flex items-center justify-between px-6 py-4 border-b border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+            <h2 class="text-lg font-semibold text-gray-900">Tabla de Posiciones</h2>
+            <span class="text-gray-500 text-sm">{{ openStandings ? '▲' : '▼' }}</span>
+          </button>
+          <div class="px-6 py-3 border-b border-gray-300 bg-gray-50 print:block hidden">
+            <h2 class="text-lg font-semibold text-gray-900">Tabla de Posiciones</h2>
+          </div>
+
+          <div v-show="openStandings">
+            <!-- Tab switcher -->
+            <div v-if="isGroupFormat" class="no-print flex border-b border-gray-200">
+              <button v-for="tab in [{ key: 'global', label: 'General' }, { key: 'groups', label: 'Por Grupos' }]"
+                :key="tab.key" @click="standingsTab = tab.key as 'global' | 'groups'"
+                class="px-5 py-3 text-sm font-medium border-b-2 transition-colors" :class="standingsTab === tab.key
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'">
+                {{ tab.label }}
+              </button>
             </div>
 
-            <div v-else class="space-y-6 px-6 py-6">
-              <div v-for="([group, rows]) in groupedStandings" :key="group" class="">
-                <h4 class="text-lg font-semibold mb-2">Grupo {{ group }}</h4>
-                <div class="overflow-x-auto">
-                  <table class="w-full">
+            <!-- Global -->
+            <div v-if="!isGroupFormat || standingsTab === 'global'" class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 border-b border-gray-300">
+                    <th class="px-6 py-3 text-left font-semibold text-gray-900 w-14">Pos</th>
+                    <th class="px-6 py-3 text-left font-semibold text-gray-900">Equipo</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">PJ</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">V</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">E</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">D</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">GF</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">GC</th>
+                    <th class="px-4 py-3 text-center font-semibold text-gray-900">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(s, i) in sortedStandings" :key="s.tablaPosicionesId"
+                    class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-3 text-sm text-gray-500">{{ i + 1 }}</td>
+                    <td class="px-6 py-3 font-medium text-gray-900">{{ s.equipo.nombre }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.partidosJugados }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.victorias ?? '-' }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.empates ?? '-' }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.derrotas ?? '-' }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.golesAFavor }}</td>
+                    <td class="px-4 py-3 text-center text-gray-700">{{ s.golesEnContra }}</td>
+                    <td class="px-4 py-3 text-center font-bold text-gray-900">{{ s.puntos }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Por grupos -->
+            <div v-if="isGroupFormat && standingsTab === 'groups'" class="space-y-6 px-6 py-6">
+              <div v-for="([group, rows]) in groupedStandings" :key="group">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">Grupo {{ group }}</h3>
+                <div class="overflow-x-auto border border-gray-200 rounded">
+                  <table class="w-full text-sm">
                     <thead>
-                      <tr class="bg-gray-50 border-b border-gray-300">
-                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-900">Pos</th>
-                        <th class="px-4 py-2 text-left text-sm font-semibold text-gray-900">Equipo</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">PJ</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">V</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">E</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">D</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">GF</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">GC</th>
-                        <th class="px-4 py-2 text-center text-sm font-semibold text-gray-900">Pts</th>
+                      <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="px-4 py-2 text-left font-semibold text-gray-900">Pos</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-900">Equipo</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">PJ</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">V</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">E</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">D</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">GF</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">GC</th>
+                        <th class="px-3 py-2 text-center font-semibold text-gray-900">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(row, idx) in rows" :key="row.tablaPosicionesId" class="border-b border-gray-200">
-                        <td class="px-4 py-2 text-sm font-semibold">{{ idx + 1 }}</td>
-                        <td class="px-4 py-2 text-sm">{{ row.equipo.nombre }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.partidosJugados }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.victorias ?? '-' }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.empates ?? '-' }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.derrotas ?? '-' }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.golesAFavor }}</td>
-                        <td class="px-4 py-2 text-center text-sm">{{ row.golesEnContra }}</td>
-                        <td class="px-4 py-2 text-center text-sm font-bold">{{ row.puntos }}</td>
+                      <tr v-for="(row, idx) in rows" :key="row.tablaPosicionesId"
+                        class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-2.5 text-gray-500">{{ idx + 1 }}</td>
+                        <td class="px-4 py-2.5 font-medium text-gray-900">{{ row.equipo.nombre }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.partidosJugados }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.victorias ?? '-' }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.empates ?? '-' }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.derrotas ?? '-' }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.golesAFavor }}</td>
+                        <td class="px-3 py-2.5 text-center text-gray-700">{{ row.golesEnContra }}</td>
+                        <td class="px-3 py-2.5 text-center font-bold text-gray-900">{{ row.puntos }}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
               </div>
-
-              <div v-if="isAdmin" class="flex items-center gap-3">
-                <label class="flex items-center gap-2">
-                  <span class="text-sm text-gray-700">Clasificados por grupo</span>
-                  <input v-model.number="clasificadosInput" type="number" min="1"
-                    class="ml-2 w-20 px-2 py-1 border rounded" />
-                </label>
-                <button :disabled="!allGroupMatchesPlayed" @click.prevent="advanceToElimination"
-                  class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-60">
-                  Avanzar a eliminatoria
-                </button>
-              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Fase regular: grupos o round robin -->
-      <TournamentBracketGroups
-        v-if="regularMatches.length > 0 && isGroupFormat && hasGroupMatches"
-        :partidos="regularMatches" />
-      <TournamentBracketRoundRobin
-        v-if="regularMatches.length > 0 && isRoundRobin"
-        :partidos="regularMatches" />
+        <!-- BRACKET -->
+        <section v-if="partidos.length > 0"
+          class="print-section bg-white border border-gray-300 rounded overflow-hidden">
+          <button @click="openBracket = !openBracket"
+            class="no-print w-full flex items-center justify-between px-6 py-4 border-b border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors text-left">
+            <h2 class="text-lg font-semibold text-gray-900">Llaves</h2>
+            <span class="text-gray-500 text-sm">{{ openBracket ? '▲' : '▼' }}</span>
+          </button>
+          <div class="px-6 py-3 border-b border-gray-300 bg-gray-50 print:block hidden">
+            <h2 class="text-lg font-semibold text-gray-900">Llave de Eliminación</h2>
+          </div>
 
-      <!-- Bracket de eliminatoria: aparece cuando se genera el avance -->
-      <TournamentBracketElimination
-        v-if="eliminationMatches.length > 0"
-        :partidos="eliminationMatches" />
+          <div v-show="openBracket">
+            <TournamentBracketGroups v-if="regularMatches.length > 0 && isGroupFormat && hasGroupMatches"
+              :partidos="regularMatches" />
+            <TournamentBracketRoundRobin v-if="regularMatches.length > 0 && isRoundRobin" :partidos="regularMatches" />
+            <TournamentBracketElimination v-if="eliminationMatches.length > 0" :partidos="eliminationMatches" />
+            <TournamentBracketElimination v-if="partidos.length > 0 && !isGroupFormat && !isRoundRobin"
+              :partidos="partidos" />
+          </div>
+        </section>
 
-      <!-- Bracket puro de eliminación directa (sin fase previa de grupos/RR) -->
-      <TournamentBracketElimination
-        v-if="partidos.length > 0 && !isGroupFormat && !isRoundRobin"
-        :partidos="partidos" />
+      </template>
     </main>
   </div>
 </template>
