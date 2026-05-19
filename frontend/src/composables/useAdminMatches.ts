@@ -95,6 +95,12 @@ export function useAdminMatches() {
    * @returns {Promise<void>}
    */
   async function generateTournamentSchedule(tournamentId: number): Promise<void> {
+    if (partidos.length > 0) {
+      feedback.type = 'error'
+      feedback.message = 'Este torneo ya tiene partidos generados. Si necesitas recrearlo, elimina primero los partidos existentes.'
+      return
+    }
+
     loading.generate = true
     feedback.type = ''
     feedback.message = ''
