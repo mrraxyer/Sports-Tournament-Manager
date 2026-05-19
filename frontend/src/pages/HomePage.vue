@@ -128,7 +128,7 @@ onMounted(() => {
           <tbody>
             <tr v-for="t in filteredTorneos()" :key="t.torneosId"
               class="border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-              @click="router.push(`/tournaments/${t.torneosId}/matches`)">
+              @click="router.push(`/torneos/${t.torneosId}/partidos`)">
               <td class="px-6 py-3 font-medium text-gray-900">{{ t.nombre }}</td>
               <td class="px-6 py-3 text-gray-600">{{ t.tipoFormato ?? '-' }}</td>
               <td class="px-6 py-3 text-gray-600">{{ formatDate(t.fechaInicio) }}</td>
@@ -139,7 +139,7 @@ onMounted(() => {
               </td>
               <td class="px-6 py-3 text-right">
                 <button class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  @click.stop="router.push(`/tournaments/${t.torneosId}/matches`)">
+                  @click.stop="router.push(`/torneos/${t.torneosId}/partidos`)">
                   Ver detalles →
                 </button>
               </td>

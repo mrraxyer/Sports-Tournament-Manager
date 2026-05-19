@@ -33,7 +33,7 @@ async function submitLogin() {
     form.contrasena = ''
 
     setTimeout(() => {
-      router.push('/dashboard')
+      router.push('/panel')
     }, 500)
   } catch (error) {
     feedback.type = 'error'
