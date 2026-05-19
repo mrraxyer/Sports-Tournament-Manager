@@ -71,7 +71,7 @@ async function submitForm() {
     return
   }
 
-  if (selectedEquipoId.value === null) {
+  if (!editingJugadorId.value && selectedEquipoId.value === null) {
     feedback.type = 'error'
     feedback.message = 'Debe seleccionar un equipo'
     return
