@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**", "/api/usuarios", "/api/usuarios/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/torneos", "/api/torneos/**", "/api/partidos/**", "/api/tabla-posiciones/**").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/jugadores", "/api/jugadores/**").hasAnyRole("ADMIN", "TEAM_CAPTAIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(AbstractHttpConfigurer::disable)
