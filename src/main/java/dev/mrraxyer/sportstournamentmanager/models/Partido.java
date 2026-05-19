@@ -27,11 +27,11 @@ public class Partido {
     private Torneo torneo;
 
     @ManyToOne
-    @JoinColumn(name = "id_equipo_local", nullable = false)
+    @JoinColumn(name = "id_equipo_local")
     private Equipo equipoLocal;
 
     @ManyToOne
-    @JoinColumn(name = "id_equipo_visitante", nullable = false)
+    @JoinColumn(name = "id_equipo_visitante")
     private Equipo equipoVisitante;
 
     @Column(name = "goles_local", nullable = false)
@@ -48,4 +48,10 @@ public class Partido {
 
     @Column(name = "grupo")
     private String grupo;
+
+    @Column(name = "bracket_index")
+    private Integer bracketIndex;
+
+    @Column(name = "fase")
+    private String fase;
 }

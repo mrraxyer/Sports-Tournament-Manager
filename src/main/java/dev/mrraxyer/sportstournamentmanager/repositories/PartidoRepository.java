@@ -6,6 +6,7 @@ import dev.mrraxyer.sportstournamentmanager.models.Equipo;
 import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.time.LocalDateTime;
 
 /**
  * Repositorio para la entidad Partido.
@@ -56,4 +57,12 @@ public interface PartidoRepository extends BaseRepository<Partido, Integer> {
     @Query("SELECT p FROM Partido p WHERE p.torneo = :torneo AND ((p.equipoLocal = :a AND p.equipoVisitante = :b) OR (p.equipoLocal = :b AND p.equipoVisitante = :a))")
     List<Partido> findHeadToHead(@Param("torneo") Torneo torneo, @Param("a") Equipo equipoA,
             @Param("b") Equipo equipoB);
+
+    /**
+     * Busca los próximos partidos del torneo que tengan al menos una plaza (local o
+     * visitante) vacía
+     * y cuya fecha sea posterior a la fecha provista. Ordena por fecha ascendente.
+     */
+    @Query("SELECT p FROM Partido p WHERE p.torneo = :torneo AND p.fechaPartido > :fecha AND (p.equipoLocal IS NULL OR p.equipoVisitante IS NULL) ORDER BY p.fechaPartido ASC")
+    List<Partido> findNextMatchesWithEmptySlot(@Param("torneo") Torneo torneo, @Param("fecha") LocalDateTime fecha);
 }

@@ -45,27 +45,38 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
         List<List<Partido>> bracket = new ArrayList<>();
         List<Equipo> currentRoundParticipants = ordered;
         int roundNumber = 1;
+        int globalBracketIndex = 1;
 
         while (currentRoundParticipants.size() > 1) {
             LocalDateTime roundStart = startDate.atTime(10, 0).plusDays(roundNumber - 1L);
             List<Partido> roundMatches = new ArrayList<>();
             List<Equipo> nextRoundParticipants = new ArrayList<>();
             int matchNumber = 1;
+            
+            int numMatches = currentRoundParticipants.size() / 2;
+            String faseName;
+            if (numMatches == 1) faseName = "Final";
+            else if (numMatches == 2) faseName = "Semifinal";
+            else if (numMatches == 4) faseName = "Cuartos";
+            else if (numMatches == 8) faseName = "Octavos";
+            else faseName = "Ronda de " + (numMatches * 2);
 
             for (int i = 0; i < currentRoundParticipants.size(); i += 2) {
                 Equipo local = currentRoundParticipants.get(i);
                 Equipo visitante = currentRoundParticipants.get(i + 1);
 
-                if (local == null && visitante == null) {
-                    continue;
-                }
-                if (local == null) {
-                    nextRoundParticipants.add(visitante);
-                    continue;
-                }
-                if (visitante == null) {
-                    nextRoundParticipants.add(local);
-                    continue;
+                if (roundNumber == 1) {
+                    if (local == null && visitante == null) {
+                        continue;
+                    }
+                    if (local == null) {
+                        nextRoundParticipants.add(visitante);
+                        continue;
+                    }
+                    if (visitante == null) {
+                        nextRoundParticipants.add(local);
+                        continue;
+                    }
                 }
 
                 Partido partido = new Partido();
@@ -73,9 +84,11 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
                 partido.setEquipoLocal(local);
                 partido.setEquipoVisitante(visitante);
                 partido.setFechaPartido(roundStart.plusHours((matchNumber - 1L) * 2L));
+                partido.setFase(faseName);
+                partido.setBracketIndex(globalBracketIndex++);
                 roundMatches.add(partido);
 
-                nextRoundParticipants.add(crearGanadorSintetico(roundNumber, matchNumber));
+                nextRoundParticipants.add(null);
                 matchNumber++;
             }
 
@@ -158,7 +171,7 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
     private Equipo crearGanadorSintetico(int roundNumber, int matchNumber) {
         Equipo equipo = new Equipo();
         equipo.setEquiposId(-1 * (roundNumber * 1000 + matchNumber));
-        equipo.setNombre("Ganador R" + roundNumber + "-P" + matchNumber);
+        equipo.setNombre("TBD");
         return equipo;
     }
 }

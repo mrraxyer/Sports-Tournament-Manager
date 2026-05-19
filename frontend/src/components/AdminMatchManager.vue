@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { watch, onMounted, computed } from 'vue'
+import { watch, onMounted, computed, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useAdminMatches } from '../composables/useAdminMatches'
 import TournamentBracketRoundRobin from './TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from './TournamentBracketElimination.vue'
+import TournamentBracketGroups from './TournamentBracketGroups.vue'
 import FormModal from './modals/FormModal.vue'
 
 const auth = useAuthStore()
@@ -20,13 +21,20 @@ const isRoundRobin = computed(() => {
   return fmt.includes('round') || fmt.includes('liga') || fmt.includes('robin')
 })
 
+const isGroupFormat = computed(() => {
+  const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
+  return fmt.includes('grupo') || fmt.includes('grupos')
+})
+
+const hasGroupMatches = computed(() => {
+  return partidos.some(p => p.grupo != null)
+})
+
 const {
   tournaments,
   selectedTournamentId,
   partidos,
-  draftScores,
   loading,
-  savingId,
   feedback,
   fetchTournaments,
   fetchTournamentMatches,
@@ -38,6 +46,24 @@ const {
   rescheduleMatch,
   deleteMatch,
 } = useAdminMatches()
+
+const showResultModal = ref(false)
+const resultMatchId = ref<number | null>(null)
+const resultLocal = ref(0)
+const resultVisitante = ref(0)
+
+function openResultModal(partidoId: number, local: number, visitante: number) {
+  resultMatchId.value = partidoId
+  resultLocal.value = local || 0
+  resultVisitante.value = visitante || 0
+  showResultModal.value = true
+}
+
+async function submitResult() {
+  if (resultMatchId.value === null) return
+  await saveMatchScore(resultMatchId.value, resultLocal.value, resultVisitante.value)
+  showResultModal.value = false
+}
 
 /**
  * Formatea una cadena de fecha ISO en fecha media y hora corta legibles.
@@ -115,10 +141,10 @@ onMounted(() => {
           <thead>
             <tr class="bg-gray-50 border-b border-gray-300">
               <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fecha</th>
+              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fase</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Equipo Local</th>
               <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Equipo Visitante</th>
-              <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Goles Local</th>
-              <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Goles Visitante</th>
+              <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Resultado</th>
               <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Acción</th>
             </tr>
           </thead>
@@ -126,51 +152,29 @@ onMounted(() => {
             <tr v-for="partido in partidos" :key="partido.partidosId" class="border-b border-gray-200 transition-colors"
               :class="partido.jugado ? 'bg-green-50' : 'hover:bg-gray-50'">
               <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(partido.fechaPartido) }}</td>
+              <td class="px-6 py-3 text-sm text-gray-700 font-medium">{{ partido.fase ?? '-' }}</td>
               <td class="px-6 py-3 text-sm font-medium text-gray-900">
-                {{ partido.equipoLocal.nombre }}
+                {{ partido.equipoLocal?.nombre ?? 'TBD' }}
               </td>
               <td class="px-6 py-3 text-sm text-gray-900">
-                {{ partido.equipoVisitante.nombre }}
+                {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
               </td>
 
-              <!-- Goles Local -->
-              <td class="px-6 py-3 text-center">
-                <span v-if="partido.jugado"
-                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800">
-                  {{ partido.golesLocal }}
+              <!-- Resultado -->
+              <td class="px-6 py-3 text-center text-sm font-semibold text-gray-900">
+                <span v-if="partido.jugado" class="px-2 py-1 bg-green-100 text-green-800 rounded">
+                  {{ partido.golesLocal }} - {{ partido.golesVisitante }}
                 </span>
-                <input v-else-if="draftScores[partido.partidosId]"
-                  v-model.number="draftScores[partido.partidosId].golesLocal" type="number" min="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
-              </td>
-
-              <!-- Goles Visitante -->
-              <td class="px-6 py-3 text-center">
-                <span v-if="partido.jugado"
-                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800">
-                  {{ partido.golesVisitante }}
-                </span>
-                <input v-else-if="draftScores[partido.partidosId]"
-                  v-model.number="draftScores[partido.partidosId].golesVisitante" type="number" min="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
+                <span v-else class="text-gray-400">Sin jugar</span>
               </td>
 
               <!-- Acción -->
               <td class="px-6 py-3 text-center">
-                <span v-if="partido.jugado" class="text-sm font-medium text-green-600">
-                  ✓ Guardado
-                </span>
-                <div v-else class="flex gap-2 justify-center">
-                  <button type="button" :disabled="savingId === partido.partidosId" @click="draftScores[partido.partidosId] && saveMatchScore(
-                    partido.partidosId,
-                    draftScores[partido.partidosId].golesLocal,
-                    draftScores[partido.partidosId].golesVisitante
-                  )"
-                    class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-60 cursor-pointer transition">
-                    <span v-if="savingId === partido.partidosId">Guardando…</span>
-                    <span v-else>Guardar</span>
+                <div class="flex gap-2 justify-center flex-wrap">
+                  <button type="button" @click="openResultModal(partido.partidosId, partido.golesLocal, partido.golesVisitante)"
+                    class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 cursor-pointer">
+                    {{ partido.jugado ? 'Editar Resultado' : 'Registrar Resultado' }}
                   </button>
-
                   <button type="button" @click="openRescheduleModal(partido.partidosId, partido.fechaPartido)"
                     class="px-3 py-1.5 bg-amber-500 text-white text-sm font-medium rounded hover:bg-amber-600 cursor-pointer">
                     Reprogramar
@@ -188,7 +192,9 @@ onMounted(() => {
     </section>
 
     <!-- Bracket del torneo seleccionado -->
-    <TournamentBracketRoundRobin v-if="selectedTournamentId !== null && partidos.length > 0 && isRoundRobin"
+    <TournamentBracketGroups v-if="selectedTournamentId !== null && partidos.length > 0 && isGroupFormat && hasGroupMatches"
+      :partidos="partidos" />
+    <TournamentBracketRoundRobin v-else-if="selectedTournamentId !== null && partidos.length > 0 && isRoundRobin"
       :partidos="partidos" />
     <TournamentBracketElimination v-else-if="selectedTournamentId !== null && partidos.length > 0"
       :partidos="partidos" />
@@ -198,6 +204,20 @@ onMounted(() => {
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Nueva fecha y hora</span>
           <input type="datetime-local" v-model="rescheduleDate" class="mt-2 w-full px-3 py-2 border rounded" />
+        </label>
+      </div>
+    </FormModal>
+
+    <FormModal v-model="showResultModal" title="Registrar Resultado" @submit="submitResult">
+      <div class="space-y-4 flex gap-4 items-center">
+        <label class="block flex-1">
+          <span class="text-sm font-medium text-gray-700">Goles Local</span>
+          <input type="number" min="0" v-model="resultLocal" class="mt-2 w-full px-3 py-2 border rounded text-center" />
+        </label>
+        <span class="text-xl font-bold pt-6">-</span>
+        <label class="block flex-1">
+          <span class="text-sm font-medium text-gray-700">Goles Visitante</span>
+          <input type="number" min="0" v-model="resultVisitante" class="mt-2 w-full px-3 py-2 border rounded text-center" />
         </label>
       </div>
     </FormModal>

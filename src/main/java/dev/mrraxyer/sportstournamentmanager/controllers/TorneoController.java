@@ -218,15 +218,6 @@ public class TorneoController {
 
         Torneo torneo = torneoOpt.get();
 
-        // Guard: solo se puede generar calendario si el torneo está en BORRADOR
-        if (!"BORRADOR".equalsIgnoreCase(torneo.getEstado())) {
-            ApiResponse<List<Partido>> response = ApiResponseBuilder
-                    .<List<Partido>>error("No se puede generar calendario: el torneo no está en estado BORRADOR",
-                            HttpStatus.CONFLICT.value())
-                    .path("/api/torneos/" + id + "/generar-calendario")
-                    .build();
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-        }
         List<Partido> existing = partidoService.findByTorneo(torneo);
 
         if (!existing.isEmpty()) {

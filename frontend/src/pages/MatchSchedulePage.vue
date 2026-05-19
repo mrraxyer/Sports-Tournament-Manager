@@ -6,6 +6,7 @@ import { useMatches } from '../composables/useMatches'
 import Navbar from '../components/Navbar.vue'
 import TournamentBracketRoundRobin from '../components/TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from '../components/TournamentBracketElimination.vue'
+import TournamentBracketGroups from '../components/TournamentBracketGroups.vue'
 import { tournamentAPI } from '../api/matches'
 
 const route = useRoute()
@@ -39,6 +40,10 @@ const isRoundRobin = computed(() => {
 const isGroupFormat = computed(() => {
   const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
   return fmt.includes('grupo') || fmt.includes('grupos')
+})
+
+const hasGroupMatches = computed(() => {
+  return partidos.some(p => p.grupo != null)
 })
 
 const groupedStandings = computed(() => {
@@ -125,14 +130,14 @@ onMounted(() => {
                 class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-3 text-sm text-gray-500">{{ partido.partidosId }}</td>
                 <td class="px-6 py-3 text-sm font-medium text-gray-900">
-                  {{ partido.equipoLocal.nombre }}
+                  {{ partido.equipoLocal?.nombre ?? 'TBD' }}
                 </td>
                 <td class="px-6 py-3 text-center">
                   <span class="text-sm font-semibold text-gray-900">{{ partido.golesLocal }} - {{ partido.golesVisitante
                   }}</span>
                 </td>
                 <td class="px-6 py-3 text-sm text-gray-900">
-                  {{ partido.equipoVisitante.nombre }}
+                  {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
                 </td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(partido.fechaPartido) }}</td>
               </tr>
@@ -270,7 +275,8 @@ onMounted(() => {
       </section>
 
       <!-- Bracket del torneo -->
-      <TournamentBracketRoundRobin v-if="partidos.length > 0 && isRoundRobin" :partidos="partidos" />
+      <TournamentBracketGroups v-if="partidos.length > 0 && isGroupFormat && hasGroupMatches" :partidos="partidos" />
+      <TournamentBracketRoundRobin v-else-if="partidos.length > 0 && isRoundRobin" :partidos="partidos" />
       <TournamentBracketElimination v-else-if="partidos.length > 0" :partidos="partidos" />
     </main>
   </div>

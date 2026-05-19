@@ -20,12 +20,6 @@ export function useAdminMatches() {
   /** Partidos del torneo seleccionado. Se reemplaza en cada consulta. */
   const partidos = reactive<Partido[]>([])
 
-  /**
-   * Borradores de marcadores editables indexados por ID de partido.
-   * Se inicializan con los valores del servidor en cada consulta y se modifican con los inputs.
-   */
-  const draftScores = reactive<Record<number, { golesLocal: number; golesVisitante: number }>>({})
-
   /** Indicadores de carga para las operaciones asíncronas. */
   const loading = reactive({ fetch: false, generate: false })
 
@@ -33,27 +27,11 @@ export function useAdminMatches() {
   const rescheduleMatchId = ref<number | null>(null)
   const rescheduleDate = ref<string>('')
 
-  /** ID del partido cuyo resultado se está guardando. Null si no hay guardado en curso. */
-  const savingId = ref<number | null>(null)
-
   /** Mensaje de retroalimentación de la última operación API mostrado como alerta. */
   const feedback = reactive({
     type: '' as 'success' | 'error' | '',
     message: '',
   })
-
-  /**
-   * Inicializa los borradores de marcadores a partir de la lista de partidos recién obtenida.
-   * @param {Partido[]} list - Partidos para inicializar los borradores.
-   */
-  function initDrafts(list: Partido[]): void {
-    list.forEach((p) => {
-      draftScores[p.partidosId] = {
-        golesLocal: p.golesLocal,
-        golesVisitante: p.golesVisitante,
-      }
-    })
-  }
 
   /**
    * Obtiene todos los torneos del backend para poblar el selector.
@@ -83,7 +61,6 @@ export function useAdminMatches() {
       const result = await matchAPI.listByTorneo(tournamentId)
       partidos.length = 0
       partidos.push(...result)
-      initDrafts(result)
     } catch (error) {
       feedback.type = 'error'
       feedback.message = error instanceof Error ? error.message : 'Error al cargar partidos'
@@ -130,7 +107,6 @@ export function useAdminMatches() {
    */
   async function saveMatchScore(matchId: number, localGoals: number, visitorGoals: number): Promise<void> {
     if (selectedTournamentId.value === null) return
-    savingId.value = matchId
     feedback.type = ''
     feedback.message = ''
     try {
@@ -145,8 +121,6 @@ export function useAdminMatches() {
     } catch (error) {
       feedback.type = 'error'
       feedback.message = error instanceof Error ? error.message : 'Error al guardar resultado'
-    } finally {
-      savingId.value = null
     }
   }
 
@@ -201,9 +175,7 @@ export function useAdminMatches() {
     tournaments,
     selectedTournamentId,
     partidos,
-    draftScores,
     loading,
-    savingId,
     feedback,
     fetchTournaments,
     fetchTournamentMatches,

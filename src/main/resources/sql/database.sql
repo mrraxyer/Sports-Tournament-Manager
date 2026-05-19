@@ -87,6 +87,10 @@ ALTER TABLE torneos ADD COLUMN IF NOT EXISTS num_grupos INT;
 
 ALTER TABLE partidos ADD COLUMN IF NOT EXISTS grupo VARCHAR(10);
 
+ALTER TABLE partidos ADD COLUMN IF NOT EXISTS bracket_index INT;
+
+ALTER TABLE partidos ADD COLUMN IF NOT EXISTS fase VARCHAR(255);
+
 ALTER TABLE tabla_posiciones
 ADD COLUMN IF NOT EXISTS grupo VARCHAR(10);
 
@@ -98,3 +102,9 @@ ADD COLUMN IF NOT EXISTS empates INT NOT NULL DEFAULT 0;
 
 ALTER TABLE tabla_posiciones
 ADD COLUMN IF NOT EXISTS derrotas INT NOT NULL DEFAULT 0;
+
+-- Permitir equipos null en partidos para soportar TBD (To Be Determined) en eliminación directa
+ALTER TABLE partidos DROP CONSTRAINT IF EXISTS partidos_id_equipo_local_fkey;
+ALTER TABLE partidos DROP CONSTRAINT IF EXISTS partidos_id_equipo_visitante_fkey;
+ALTER TABLE partidos ADD CONSTRAINT partidos_id_equipo_local_fkey FOREIGN KEY (id_equipo_local) REFERENCES equipos(equipos_id) ON DELETE CASCADE;
+ALTER TABLE partidos ADD CONSTRAINT partidos_id_equipo_visitante_fkey FOREIGN KEY (id_equipo_visitante) REFERENCES equipos(equipos_id) ON DELETE CASCADE;

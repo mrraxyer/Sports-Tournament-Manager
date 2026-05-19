@@ -10,22 +10,32 @@ const props = defineProps<{ partidos: Partido[] }>()
  * @returns {{ label: string; matches: Partido[] }[]}
  */
 const rondas = computed(() => {
+  // Primero ordenamos todos los partidos por bracketIndex
+  const sortedMatches = [...props.partidos].sort((a, b) => (a.bracketIndex ?? 0) - (b.bracketIndex ?? 0))
+
   const map = new Map<string, Partido[]>()
-  for (const p of props.partidos) {
-    const date = p.fechaPartido.slice(0, 10)
-    if (!map.has(date)) map.set(date, [])
-    map.get(date)!.push(p)
+  for (const p of sortedMatches) {
+    // Si no tiene fase (torneos antiguos), usamos la fecha como fallback
+    const key = p.fase || p.fechaPartido.slice(0, 10)
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(p)
   }
-  const sorted = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
-  const total = sorted.length
-  return sorted.map(([date, matches], index) => {
-    const fromEnd = total - 1 - index
-    let label: string
-    if (fromEnd === 0) label = 'Final'
-    else if (fromEnd === 1) label = 'Semifinal'
-    else if (fromEnd === 2) label = 'Cuartos'
-    else label = `Ronda ${index + 1}`
-    return { date, matches, label }
+
+  // Como iteramos sobre partidos ordenados por bracketIndex, 
+  // el orden de inserción en el Map ya es cronológico por fases.
+  return Array.from(map.entries()).map(([faseKey, matches]) => {
+    // Si la key es una fecha (fallback), generamos una etiqueta basada en la cantidad de partidos
+    let label = faseKey
+    if (faseKey.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const numMatches = matches.length
+      if (numMatches === 1) label = 'Final'
+      else if (numMatches === 2) label = 'Semifinal'
+      else if (numMatches === 4) label = 'Cuartos'
+      else if (numMatches === 8) label = 'Octavos'
+      else label = `Ronda (${numMatches * 2} equipos)`
+    }
+    
+    return { date: faseKey, matches, label }
   })
 })
 
@@ -40,6 +50,7 @@ function winner(partido: Partido): 'local' | 'visitante' | 'empate' {
   if (partido.golesVisitante > partido.golesLocal) return 'visitante'
   return 'empate'
 }
+
 </script>
 
 <template>
@@ -60,13 +71,18 @@ function winner(partido: Partido): 'local' | 'visitante' | 'empate' {
             <div v-for="partido in ronda.matches" :key="partido.partidosId"
               class="w-44 rounded border overflow-hidden text-xs"
               :class="partido.jugado ? 'border-blue-200' : 'border-dashed border-gray-300'">
+              
               <!-- Fila equipo local -->
               <div class="px-3 py-2 flex justify-between items-center border-b" :class="partido.jugado && winner(partido) === 'local'
                 ? 'bg-blue-600 text-white font-bold border-blue-600'
                 : partido.jugado
                   ? 'bg-blue-50 text-blue-900 border-blue-100'
-                  : 'bg-white text-gray-400 border-gray-100'">
-                <span class="truncate max-w-30">{{ partido.equipoLocal.nombre }}</span>
+                  : partido.equipoLocal
+                    ? 'bg-white text-gray-400 border-gray-100'
+                    : 'bg-gray-100 text-gray-300 border-gray-200'">
+                <span class="truncate max-w-30">
+                  {{ partido.equipoLocal?.nombre ?? 'TBD' }}
+                </span>
                 <span class="font-bold ml-2 shrink-0">
                   {{ partido.jugado ? partido.golesLocal : '–' }}
                 </span>
@@ -77,8 +93,12 @@ function winner(partido: Partido): 'local' | 'visitante' | 'empate' {
                 ? 'bg-blue-600 text-white font-bold'
                 : partido.jugado
                   ? 'bg-blue-50 text-blue-800'
-                  : 'bg-white text-gray-400'">
-                <span class="truncate max-w-30">{{ partido.equipoVisitante.nombre }}</span>
+                  : partido.equipoVisitante
+                    ? 'bg-white text-gray-400'
+                    : 'bg-gray-100 text-gray-300'">
+                <span class="truncate max-w-30">
+                  {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
+                </span>
                 <span class="font-bold ml-2 shrink-0">
                   {{ partido.jugado ? partido.golesVisitante : '–' }}
                 </span>

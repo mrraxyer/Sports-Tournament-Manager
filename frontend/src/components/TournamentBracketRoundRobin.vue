@@ -55,7 +55,7 @@ const jornadas = computed(() => {
                 <span
                   class="truncate font-medium"
                   :class="partido.jugado ? 'text-blue-900' : 'text-gray-400'"
-                >{{ partido.equipoLocal.nombre }}</span>
+                >{{ partido.equipoLocal?.nombre ?? 'TBD' }}</span>
                 <span
                   class="shrink-0 font-bold text-xs"
                   :class="partido.jugado ? 'text-blue-700' : 'text-gray-300'"
@@ -65,7 +65,7 @@ const jornadas = computed(() => {
                 <span
                   class="truncate text-right"
                   :class="partido.jugado ? 'text-blue-800' : 'text-gray-400'"
-                >{{ partido.equipoVisitante.nombre }}</span>
+                >{{ partido.equipoVisitante?.nombre ?? 'TBD' }}</span>
               </div>
             </div>
           </div>

@@ -143,6 +143,12 @@ public class PartidoController {
             if (partidoActualizado.getFechaPartido() != null) {
                 partido.setFechaPartido(partidoActualizado.getFechaPartido());
             }
+            if (partidoActualizado.getEquipoLocal() != null) {
+                partido.setEquipoLocal(partidoActualizado.getEquipoLocal());
+            }
+            if (partidoActualizado.getEquipoVisitante() != null) {
+                partido.setEquipoVisitante(partidoActualizado.getEquipoVisitante());
+            }
 
             Partido partidoGuardado = partidoService.save(partido);
 

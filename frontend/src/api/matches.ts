@@ -10,6 +10,8 @@ export interface Partido {
   fechaPartido: string
   jugado: boolean
   grupo?: string | null
+  fase?: string | null
+  bracketIndex?: number
 }
 
 export interface TablaPosiciones {
