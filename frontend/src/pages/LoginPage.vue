@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+
+const dismissTimeoutId = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const form = reactive({
   correo: '',
@@ -36,8 +38,32 @@ async function submitLogin() {
   } catch (error) {
     feedback.type = 'error'
     feedback.message = error instanceof Error ? error.message : 'No fue posible iniciar sesión.'
+    form.contrasena = ''
+
+    // Cancel any pending timeout
+    if (dismissTimeoutId.value) {
+      clearTimeout(dismissTimeoutId.value)
+      // When retrying after an error, extend the timeout duration
+      dismissTimeoutId.value = setTimeout(() => {
+        feedback.type = ''
+        feedback.message = ''
+      }, 8000)
+    } else {
+      // Auto-dismiss error after 5 seconds on initial error
+      dismissTimeoutId.value = setTimeout(() => {
+        feedback.type = ''
+        feedback.message = ''
+      }, 5000)
+    }
   }
 }
+
+// Cleanup timeout on component unmount
+onBeforeUnmount(() => {
+  if (dismissTimeoutId.value) {
+    clearTimeout(dismissTimeoutId.value)
+  }
+})
 </script>
 
 <template>

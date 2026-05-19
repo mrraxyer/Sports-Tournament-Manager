@@ -38,7 +38,9 @@ api.interceptors.response.use(
 
     const originalRequest = (error.config ?? {}) as any
     // If unauthorized and request not yet retried, try refresh flow
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh/redirect for login endpoint - let the login component handle 401 errors
+    const isLoginEndpoint = originalRequest.url?.includes('/auth/login')
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
       originalRequest._retry = true
 
       if (typeof window !== 'undefined') {
