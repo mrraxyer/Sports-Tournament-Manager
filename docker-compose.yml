@@ -11,11 +11,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/sql:/docker-entrypoint-initdb.d
     ports:
-      - "5433:5432"
+      - "5434:5432"
     networks:
       - sports-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:?DB_USERNAME is required} -d ${DB_NAME:?DB_NAME is required}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USERNAME:?DB_USERNAME is required} -d ${DB_NAME:?DB_NAME is required}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,4 +70,3 @@ volumes:
 networks:
   sports-network:
     driver: bridge
-
