@@ -8,10 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Entidad Torneo: Contiene los detalles de configuración para cada torneo.
- * Incluye nombre, tipo de formato y fecha de inicio.
- */
+/** Entidad Torneo. */
 @Entity
 @Table(name = "torneos")
 @Data

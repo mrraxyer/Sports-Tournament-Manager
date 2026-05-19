@@ -12,9 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Jugadores
- */
+/** Controlador de Jugadores. */
 @RestController
 @RequestMapping("/api/jugadores")
 public class JugadorController {
@@ -22,9 +20,6 @@ public class JugadorController {
     @Autowired
     private JugadorService jugadorService;
 
-    /**
-     * Obtiene un jugador por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Jugador>> obtenerJugador(@PathVariable Integer id) {
         Optional<Jugador> jugador = jugadorService.findById(id);
@@ -45,9 +40,6 @@ public class JugadorController {
         }
     }
 
-    /**
-     * Obtiene todos los jugadores
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Jugador>>> listarJugadores() {
         List<Jugador> jugadores = jugadorService.findAll();
@@ -60,9 +52,6 @@ public class JugadorController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Crea un nuevo jugador
-     */
     @PostMapping
     public ResponseEntity<ApiResponse<Jugador>> crearJugador(@RequestBody Jugador jugador) {
         Jugador jugadorGuardado = jugadorService.save(jugador);
@@ -75,9 +64,6 @@ public class JugadorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Actualiza un jugador existente
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Jugador>> actualizarJugador(
             @PathVariable Integer id,
@@ -106,9 +92,6 @@ public class JugadorController {
         }
     }
 
-    /**
-     * Elimina un jugador
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarJugador(@PathVariable Integer id) {
         if (jugadorService.existsById(id)) {

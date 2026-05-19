@@ -6,10 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-/**
- * PasswordEncoder que usa SHA-1 para codificar contraseñas.
- *
- */
+/** PasswordEncoder con SHA-1. */
 public class Sha1PasswordEncoder implements PasswordEncoder {
 
     @Override

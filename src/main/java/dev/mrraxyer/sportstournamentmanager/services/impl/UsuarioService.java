@@ -9,12 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * Servicio de Usuario
- *
- * Extiende BaseService<Usuario, Integer> para herdar todas las operaciones CRUD genéricas.
- *
- */
+/** Servicio de Usuario. */
 @Service
 public class UsuarioService extends BaseService<Usuario, Integer> {
     
@@ -29,18 +24,11 @@ public class UsuarioService extends BaseService<Usuario, Integer> {
         return usuarioRepository;
     }
     
-    /**
-     * Busca un usuario por correo electrónico
-     * Método específico que extiende la funcionalidad base
-     */
     public Optional<Usuario> findByCorreo(String correo) {
         return usuarioRepository.findByCorreo(correo);
     }
 
-    /**
-     * Si la contraseña parece ya estar codificada
-     * (hex de 40 caracteres) no se vuelve a codificar.
-     */
+    /** No recodifica si la contraseña ya es SHA-1 (hex de 40 caracteres). */
     @Override
     public Usuario save(Usuario usuario) {
         if (usuario.getContrasena() != null) {

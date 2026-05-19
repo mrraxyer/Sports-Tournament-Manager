@@ -5,20 +5,17 @@ import ConfirmModal from './modals/ConfirmModal.vue'
 import FormModal from './modals/FormModal.vue'
 import ContentModal from './modals/ContentModal.vue'
 
-// Props
 const props = defineProps<{
   modelValue: boolean
   teamId: number | null
   teamName: string
 }>()
 
-// Emits
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   close: []
 }>()
 
-// Composable
 const {
   jugadores,
   loading,
@@ -51,7 +48,7 @@ onMounted(() => {
   }
 })
 
-// Watchers
+// Observadores
 watch(
   () => props.modelValue,
   (newVal) => {

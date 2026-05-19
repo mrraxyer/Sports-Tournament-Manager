@@ -14,11 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Partidos
- * Gestiona las operaciones CRUD de partidos y la publicación de eventos
- * cuando se registran o actualizan resultados.
- */
+/** Controlador de Partidos. */
 @RestController
 @RequestMapping("/api/partidos")
 public class PartidoController {
@@ -29,9 +25,6 @@ public class PartidoController {
     @Autowired
     private TorneoRepository torneoRepository;
 
-    /**
-     * Obtiene un partido por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Partido>> obtenerPartido(@PathVariable Integer id) {
         Optional<Partido> partido = partidoService.findById(id);
@@ -52,9 +45,6 @@ public class PartidoController {
         }
     }
 
-    /**
-     * Obtiene todos los partidos
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Partido>>> listarPartidos() {
         List<Partido> partidos = partidoService.findAll();
@@ -67,9 +57,6 @@ public class PartidoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene todos los partidos de un torneo
-     */
     @GetMapping("/torneo/{torneoId}")
     public ResponseEntity<ApiResponse<List<Partido>>> listarPartidosPorTorneo(
             @PathVariable Integer torneoId) {
@@ -94,13 +81,8 @@ public class PartidoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Crea un nuevo partido
-     * Esto podría ser usado para programar partidos sin resultados inicialmente
-     */
     @PostMapping
     public ResponseEntity<ApiResponse<Partido>> crearPartido(@RequestBody Partido partido) {
-        // Inicializar goles si no se especifican
         if (partido.getGolesLocal() == null) {
             partido.setGolesLocal(0);
         }
@@ -118,11 +100,6 @@ public class PartidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Actualiza un partido existente (usado para registrar/actualizar resultados)
-     * Cuando se actualiza el resultado, se publica automáticamente un evento
-     * que notifica a los observadores de la tabla de posiciones
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Partido>> actualizarPartido(
             @PathVariable Integer id,
@@ -133,7 +110,6 @@ public class PartidoController {
         if (partidoExistente.isPresent()) {
             Partido partido = partidoExistente.get();
 
-            // Actualizar solo los campos necesarios
             if (partidoActualizado.getGolesLocal() != null) {
                 partido.setGolesLocal(partidoActualizado.getGolesLocal());
             }
@@ -167,13 +143,6 @@ public class PartidoController {
         }
     }
 
-    /**
-     * Registra el resultado de un partido (endpoint específico para resultados)
-     * 
-     * @param id             ID del partido
-     * @param golesLocal     goles del equipo local
-     * @param golesVisitante goles del equipo visitante
-     */
     @PutMapping("/{id}/resultado")
     public ResponseEntity<ApiResponse<Partido>> registrarResultado(
             @PathVariable Integer id,
@@ -184,7 +153,6 @@ public class PartidoController {
 
         if (partidoOpt.isPresent()) {
             Partido partido = partidoOpt.get();
-            // Guard: solo permitir registrar resultado si el torneo está ACTIVO
             if (partido.getTorneo() == null || !"ACTIVO".equalsIgnoreCase(partido.getTorneo().getEstado())) {
                 ApiResponse<Partido> response = ApiResponseBuilder
                         .<Partido>error("No se puede registrar resultado: el torneo no está en estado ACTIVO",
@@ -214,9 +182,6 @@ public class PartidoController {
         }
     }
 
-    /**
-     * Elimina un partido
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarPartido(@PathVariable Integer id) {
         if (partidoService.existsById(id)) {

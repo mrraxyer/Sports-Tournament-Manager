@@ -9,12 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Servicio de Torneo
- *
- * Extiende BaseService<Torneo, Integer> para herdar todas las operaciones CRUD genéricas.
- *
- */
+/** Servicio de Torneo. */
 @Service
 public class TorneoService extends BaseService<Torneo, Integer> {
     
@@ -26,18 +21,10 @@ public class TorneoService extends BaseService<Torneo, Integer> {
         return torneoRepository;
     }
     
-    /**
-     * Busca torneos por nombre
-     * Método específico que extiende la funcionalidad base
-     */
     public List<Torneo> findByNombre(String nombre) {
         return torneoRepository.findByNombreContainingIgnoreCase(nombre);
     }
     
-    /**
-     * Busca torneos por tipo de formato
-     * Método específico que extiende la funcionalidad base
-     */
     public List<Torneo> findByTipoFormato(String tipoFormato) {
         return torneoRepository.findByTipoFormato(tipoFormato);
     }

@@ -16,9 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Torneos
- */
+/** Controlador de Torneos. */
 @RestController
 @RequestMapping("/api/torneos")
 public class TorneoController {
@@ -41,9 +39,6 @@ public class TorneoController {
     @Autowired
     private dev.mrraxyer.sportstournamentmanager.services.impl.TablaPosicionesService tablaPosicionesService;
 
-    /**
-     * Obtiene un torneo por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Torneo>> obtenerTorneo(@PathVariable Integer id) {
         Optional<Torneo> torneo = torneoService.findById(id);
@@ -64,9 +59,6 @@ public class TorneoController {
         }
     }
 
-    /**
-     * Obtiene la lista de equipos inscritos en un torneo
-     */
     @GetMapping("/{id}/equipos")
     public ResponseEntity<ApiResponse<java.util.List<dev.mrraxyer.sportstournamentmanager.models.Equipo>>> listarEquiposPorTorneo(
             @PathVariable Integer id) {
@@ -91,9 +83,6 @@ public class TorneoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene todos los torneos
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Torneo>>> listarTorneos() {
         List<Torneo> torneos = torneoService.findAll();
@@ -106,9 +95,6 @@ public class TorneoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Crea un nuevo torneo
-     */
     @PostMapping
     public ResponseEntity<ApiResponse<Torneo>> crearTorneo(@RequestBody Torneo torneo) {
         Torneo torneoGuardado = torneoService.save(torneo);
@@ -121,9 +107,6 @@ public class TorneoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Actualiza un torneo existente
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Torneo>> actualizarTorneo(
             @PathVariable Integer id,
@@ -150,9 +133,6 @@ public class TorneoController {
         }
     }
 
-    /**
-     * Elimina un torneo
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarTorneo(@PathVariable Integer id) {
         if (torneoService.existsById(id)) {
@@ -163,9 +143,6 @@ public class TorneoController {
         }
     }
 
-    /**
-     * Busca torneos por nombre (método específico de TorneoService)
-     */
     @GetMapping("/buscar/nombre")
     public ResponseEntity<ApiResponse<List<Torneo>>> buscarPorNombre(
             @RequestParam String nombre) {
@@ -180,9 +157,6 @@ public class TorneoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Busca torneos por tipo de formato
-     */
     @GetMapping("/buscar/formato")
     public ResponseEntity<ApiResponse<List<Torneo>>> buscarPorFormato(
             @RequestParam String tipoFormato) {
@@ -197,13 +171,7 @@ public class TorneoController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Genera el calendario de partidos para un torneo según su formato configurado.
-     * Retorna 409 Conflict si el torneo ya tiene partidos para evitar duplicados.
-     *
-     * @param id el ID del torneo
-     * @return la lista de partidos generados, o una respuesta de error
-     */
+    /** Genera calendario según el formato del torneo. Retorna 409 si ya existen partidos. */
     @PostMapping("/{id}/generar-calendario")
     public ResponseEntity<ApiResponse<List<Partido>>> generarCalendario(@PathVariable Integer id) {
         Optional<Torneo> torneoOpt = torneoService.findById(id);
@@ -238,10 +206,6 @@ public class TorneoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Avanza la fase de grupos a eliminatoria directa tomando los N clasificados
-     * por grupo
-     */
     @PostMapping("/{id}/avanzar-eliminatoria")
     public ResponseEntity<ApiResponse<List<Partido>>> avanzarEliminatoria(
             @PathVariable Integer id,
@@ -274,7 +238,6 @@ public class TorneoController {
             List<dev.mrraxyer.sportstournamentmanager.models.TablaPosiciones> tps = tablaPosicionesRepository
                     .findByTorneoAndGrupo(torneo, grupoCodigo);
 
-            // ordenar con mismos criterios: puntos, diff, head-to-head, goles a favor
             tps.sort((a, b) -> {
                 int cmp = Integer.compare(b.getPuntos(), a.getPuntos());
                 if (cmp != 0)
@@ -331,12 +294,10 @@ public class TorneoController {
             letra++;
         }
 
-        // Generar eliminatoria con los clasificados
         dev.mrraxyer.sportstournamentmanager.strategies.MatchScheduleStrategy elim = new dev.mrraxyer.sportstournamentmanager.strategies.SingleEliminationScheduleStrategy();
         List<Partido> partidosElim = matchSchedulerService.scheduleMatches(torneo, clasificados, elim,
                 java.time.LocalDate.now());
 
-        // Asegurar que los partidos de eliminatoria no tengan grupo
         for (Partido p : partidosElim) {
             p.setGrupo(null);
         }
@@ -350,9 +311,6 @@ public class TorneoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Cambia el estado del torneo (BORRADOR -> ACTIVO -> FINALIZADO)
-     */
     @PatchMapping("/{id}/estado")
     public ResponseEntity<ApiResponse<Torneo>> cambiarEstado(
             @PathVariable Integer id,
@@ -372,7 +330,6 @@ public class TorneoController {
         String actual = torneo.getEstado();
         String nuevo = estado != null ? estado.toUpperCase() : null;
 
-        // Validar transiciones
         if (nuevo == null
                 || !("BORRADOR".equals(nuevo) || "ACTIVO".equals(nuevo) || "FINALIZADO".equals(nuevo))) {
             ApiResponse<Torneo> response = ApiResponseBuilder
@@ -383,11 +340,8 @@ public class TorneoController {
         }
 
         if ("BORRADOR".equalsIgnoreCase(actual) && "ACTIVO".equals(nuevo)) {
-            // ok
         } else if ("ACTIVO".equalsIgnoreCase(actual) && "FINALIZADO".equals(nuevo)) {
-            // ok
         } else if (actual.equalsIgnoreCase(nuevo)) {
-            // no-op
         } else {
             ApiResponse<Torneo> response = ApiResponseBuilder
                     .<Torneo>error("Transición de estado inválida", HttpStatus.CONFLICT.value())

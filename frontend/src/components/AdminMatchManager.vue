@@ -9,13 +9,8 @@ import FormModal from './modals/FormModal.vue'
 
 const auth = useAuthStore()
 
-/** Verdadero cuando el usuario autenticado tiene el rol ADMIN. */
 const isAdmin = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'ADMIN')
 
-/**
- * Verdadero cuando el torneo seleccionado es de formato round-robin o liga.
- * Determina qué componente de bracket se muestra.
- */
 const isRoundRobin = computed(() => {
   const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
   return fmt.includes('round') || fmt.includes('liga') || fmt.includes('robin')
@@ -52,7 +47,6 @@ const {
   deleteMatch,
 } = useAdminMatches()
 
-// Número de clasificados para el modal de avance
 const clasificadosInput = ref(2)
 const showAdvanceModal = ref(false)
 
@@ -74,11 +68,6 @@ async function submitResult() {
   showResultModal.value = false
 }
 
-/**
- * Formatea una cadena de fecha ISO en fecha media y hora corta legibles.
- * @param {string} date - Cadena de fecha ISO 8601 proveniente de la API.
- * @returns {string} Cadena de fecha formateada, o '-' si el valor está vacío.
- */
 function formatDate(date: string): string {
   if (!date) return '-'
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(

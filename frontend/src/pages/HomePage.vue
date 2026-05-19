@@ -39,7 +39,7 @@ async function fetchTorneos() {
 function filteredTorneos() {
   const isAdmin = auth.session?.usuario?.rol === 'ADMIN'
   return torneos.filter(t => {
-    // Never show BORRADOR tournaments publicly unless the user is an admin
+    // Ocultar torneos BORRADOR a usuarios no administradores
     if ((t.estado ?? '').toUpperCase() === 'BORRADOR' && !isAdmin) return false
     const matchesSearch = t.nombre.toLowerCase().includes(search.value.toLowerCase())
     const matchesEstado = filterEstado.value === 'todos' || t.estado?.toUpperCase() === filterEstado.value
@@ -71,7 +71,7 @@ onMounted(() => {
 
     <main class="max-w-5xl mx-auto px-6 py-10 space-y-6">
 
-      <!-- Header -->
+      <!-- Encabezado -->
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 class="text-2xl font-semibold text-gray-900">Torneos</h1>
@@ -79,7 +79,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Filters -->
+      <!-- Filtros -->
       <div class="flex flex-wrap gap-3">
         <input v-model="search" type="text" placeholder="Buscar torneo…"
           class="px-3 py-2 text-sm border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1 min-w-56" />
@@ -98,7 +98,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Loading -->
+      <!-- Cargando -->
       <div v-if="loading" class="py-16 text-center text-gray-500 text-sm">
         Cargando torneos…
       </div>
@@ -108,12 +108,12 @@ onMounted(() => {
         {{ error }}
       </div>
 
-      <!-- Empty -->
+      <!-- Sin resultados -->
       <div v-else-if="filteredTorneos().length === 0" class="py-16 text-center text-gray-500 text-sm">
         No hay torneos que coincidan con los filtros aplicados.
       </div>
 
-      <!-- Tournament list -->
+      <!-- Lista de torneos -->
       <div v-else class="bg-white border border-gray-300 rounded overflow-hidden">
         <table class="w-full text-sm">
           <thead>

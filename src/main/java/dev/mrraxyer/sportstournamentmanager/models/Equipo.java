@@ -7,10 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
-/**
- * Entidad Equipo: Representa los equipos que participan en los torneos.
- * Cada equipo tiene un capitán (usuario) y pertenece a un torneo específico.
- */
+/** Entidad Equipo. Pertenece a un torneo y tiene un capitán asignado. */
 @Entity
 @Table(name = "equipos")
 @Data

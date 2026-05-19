@@ -11,32 +11,20 @@ interface Tournament {
 }
 
 export function useAdminMatches() {
-  /** Lista de torneos obtenida de GET /torneos para poblar el selector. */
   const tournaments = reactive<Tournament[]>([])
-
-  /** ID del torneo seleccionado actualmente. Null indica que no hay torneo seleccionado. */
   const selectedTournamentId = ref<number | null>(null)
-
-  /** Partidos del torneo seleccionado. Se reemplaza en cada consulta. */
   const partidos = reactive<Partido[]>([])
-
-  /** Indicadores de carga para las operaciones asíncronas. */
   const loading = reactive({ fetch: false, generate: false })
 
   const showRescheduleModal = ref(false)
   const rescheduleMatchId = ref<number | null>(null)
   const rescheduleDate = ref<string>('')
 
-  /** Mensaje de retroalimentación de la última operación API mostrado como alerta. */
   const feedback = reactive({
     type: '' as 'success' | 'error' | '',
     message: '',
   })
 
-  /**
-   * Obtiene todos los torneos del backend para poblar el selector.
-   * @returns {Promise<void>}
-   */
   async function fetchTournaments(): Promise<void> {
     try {
       const response = await api.get<{ data: Tournament[] }>('/torneos')
@@ -48,11 +36,6 @@ export function useAdminMatches() {
     }
   }
 
-  /**
-   * Obtiene todos los partidos del torneo indicado y reinicia los borradores de marcadores.
-   * @param {number} tournamentId - ID del torneo cuyos partidos se van a obtener.
-   * @returns {Promise<void>}
-   */
   async function fetchTournamentMatches(tournamentId: number): Promise<void> {
     loading.fetch = true
     feedback.type = ''
@@ -69,12 +52,6 @@ export function useAdminMatches() {
     }
   }
 
-  /**
-   * Solicita al backend ejecutar el algoritmo de programación para el torneo indicado.
-   * Recarga la lista de partidos al completarse. Retorna error 409 si ya existen partidos.
-   * @param {number} tournamentId - ID del torneo para el que se generará el calendario.
-   * @returns {Promise<void>}
-   */
   async function generateTournamentSchedule(tournamentId: number): Promise<void> {
     if (partidos.length > 0) {
       feedback.type = 'error'
@@ -98,12 +75,6 @@ export function useAdminMatches() {
     }
   }
 
-  /**
-   * Llama al endpoint de avanzar-eliminatoria para generar los cruces de la fase
-   * knockout a partir de la clasificación actual (grupos o round-robin).
-   * @param tournamentId ID del torneo
-   * @param clasificados Número total de clasificados (grupos: por grupo, RR: total)
-   */
   async function generateEliminationPhase(tournamentId: number, clasificados = 2): Promise<void> {
     loading.generate = true
     feedback.type = ''
@@ -123,13 +94,6 @@ export function useAdminMatches() {
     }
   }
 
-  /**
-   * Guarda el resultado de un partido y recarga la lista del torneo seleccionado.
-   * @param {number} matchId - ID del partido a actualizar.
-   * @param {number} localGoals - Goles anotados por el equipo local.
-   * @param {number} visitorGoals - Goles anotados por el equipo visitante.
-   * @returns {Promise<void>}
-   */
   async function saveMatchScore(matchId: number, localGoals: number, visitorGoals: number): Promise<void> {
     if (selectedTournamentId.value === null) return
     feedback.type = ''
@@ -151,7 +115,7 @@ export function useAdminMatches() {
 
   async function openRescheduleModal(matchId: number, fechaIso: string) {
     rescheduleMatchId.value = matchId
-    // convertir ISO a valor aceptado por input[type=datetime-local]
+    // Convertir ISO a formato requerido por input[type=datetime-local]
     const dt = new Date(fechaIso)
     const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
     rescheduleDate.value = local.toISOString().slice(0, 16)
@@ -173,10 +137,6 @@ export function useAdminMatches() {
     }
   }
 
-  /**
-   * Elimina un partido por ID después de confirmación del usuario.
-   * @param matchId ID del partido a eliminar
-   */
   async function deleteMatch(matchId: number) {
     if (!confirm('¿Confirmas eliminar este partido? Esta acción no puede revertirse.')) return
     if (selectedTournamentId.value === null) return

@@ -3,9 +3,7 @@ package dev.mrraxyer.sportstournamentmanager.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-/**
- * Entidad para propiedades globales que pueden almacenarse en BD
- */
+/** Entidad para propiedades globales almacenadas en BD. */
 @Getter
 @Entity
 @Table(name = "global_properties")

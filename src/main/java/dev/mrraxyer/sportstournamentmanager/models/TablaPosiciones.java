@@ -5,12 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Entidad TablaPosiciones: Rastrea las métricas de rendimiento de los equipos
- * dentro de un torneo específico.
- * Contiene estadísticas como partidos jugados, puntos, goles a favor y en
- * contra.
- */
+/** Entidad TablaPosiciones. Estadísticas de equipo por torneo. */
 @Entity
 @Table(name = "tabla_posiciones")
 @Data

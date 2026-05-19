@@ -13,13 +13,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Servicio de Inicialización
- *
- * Se ejecuta automáticamente al iniciar la aplicación.
- * Crea los roles predeterminados y el usuario maestro si no existen.
- * Las credenciales del usuario maestro se leen desde variables de entorno.
- */
+/** Crea roles y usuario maestro al iniciar si no existen. */
 @Service
 public class InitializationService {
 
@@ -45,10 +39,6 @@ public class InitializationService {
     @Value("${app.init.enabled:true}")
     private boolean initEnabled;
 
-    /**
-     * Se ejecuta cuando la aplicación ha terminado de iniciarse.
-     * Crea los roles y el usuario maestro si no existen.
-     */
     @EventListener(ApplicationReadyEvent.class)
     public void initializeDefaultData() {
         if (!initEnabled) {
@@ -57,19 +47,12 @@ public class InitializationService {
         }
 
         logger.info("Iniciando proceso de inicialización de datos...");
-
-        // Crear roles por defecto
         createDefaultRoles();
-
-        // Crear usuario maestro
         createMasterUser();
-
         logger.info("Proceso de inicialización completado");
     }
 
-    /**
-     * Crea los roles predeterminados si no existen.
-     */
+    /** Crea los roles predeterminados si no existen. */
     private void createDefaultRoles() {
         String[] defaultRoles = {"ADMIN", "USER", "TEAM_CAPTAIN"};
 
@@ -87,10 +70,7 @@ public class InitializationService {
         }
     }
 
-    /**
-     * Crea el usuario maestro si no existe.
-     * Lee las credenciales desde las variables de entorno/propiedades.
-     */
+    /** Crea el usuario maestro si no existe. */
     private void createMasterUser() {
         Optional<Usuario> existingUser = usuarioRepository.findByCorreo(masterEmail);
         if (existingUser.isPresent()) {
@@ -98,7 +78,6 @@ public class InitializationService {
             return;
         }
 
-        // Obtener el rol ADMIN
         Optional<Rol> adminRol = rolRepository.findByNombre("ADMIN");
 
         if (adminRol.isEmpty()) {
@@ -106,7 +85,6 @@ public class InitializationService {
             return;
         }
 
-        // Crear el usuario maestro
         Usuario masterUser = new Usuario();
         masterUser.setNombre(masterUsername);
         masterUser.setCorreo(masterEmail);
@@ -118,10 +96,7 @@ public class InitializationService {
         logger.info("Usuario maestro creado: {} ({})", masterEmail, masterUsername);
     }
 
-    /**
-     * Repara instalaciones previas donde el usuario maestro pudo guardarse sin hash.
-     * Solo migra si la contraseña actual no parece SHA-1.
-     */
+    /** Migra contraseña del usuario maestro si no está hasheada (instalaciones previas). */
     private void migrateLegacyMasterPassword(Usuario existingMasterUser) {
         String currentPassword = existingMasterUser.getContrasena();
         if (isProbablySha1(currentPassword)) {

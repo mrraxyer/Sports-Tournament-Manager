@@ -4,27 +4,20 @@ import type { Partido } from '../api/matches'
 
 const props = defineProps<{ partidos: Partido[] }>()
 
-/**
- * Agrupa los partidos por fecha (YYYY-MM-DD), los ordena cronológicamente
- * y asigna etiquetas de ronda (Ronda N, Cuartos, Semifinal, Final).
- * @returns {{ label: string; matches: Partido[] }[]}
- */
+// Agrupa por fase/fecha y genera etiqueta de ronda
 const rondas = computed(() => {
-  // Primero ordenamos todos los partidos por bracketIndex
   const sortedMatches = [...props.partidos].sort((a, b) => (a.bracketIndex ?? 0) - (b.bracketIndex ?? 0))
 
   const map = new Map<string, Partido[]>()
   for (const p of sortedMatches) {
-    // Si no tiene fase (torneos antiguos), usamos la fecha como fallback
+    // Torneos sin fase: usar fecha como clave
     const key = p.fase || p.fechaPartido.slice(0, 10)
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(p)
   }
 
-  // Como iteramos sobre partidos ordenados por bracketIndex, 
-  // el orden de inserción en el Map ya es cronológico por fases.
   return Array.from(map.entries()).map(([faseKey, matches]) => {
-    // Si la key es una fecha (fallback), generamos una etiqueta basada en la cantidad de partidos
+    // Fecha como clave → derivar etiqueta por cantidad de partidos
     let label = faseKey
     if (faseKey.match(/^\d{4}-\d{2}-\d{2}$/)) {
       const numMatches = matches.length
@@ -39,11 +32,7 @@ const rondas = computed(() => {
   })
 })
 
-/**
- * Determina el ganador de un partido jugado.
- * @param {Partido} partido
- * @returns {'local' | 'visitante' | 'empate'}
- */
+// Ganador o empate del partido
 function winner(partido: Partido): 'local' | 'visitante' | 'empate' {
   if (!partido.jugado) return 'empate'
   if (partido.golesLocal > partido.golesVisitante) return 'local'

@@ -82,7 +82,7 @@ const formatDate = (date: string) => {
 
 onMounted(async () => {
   auth.hydrateSession()
-  // Guard: redirect to home if tournament is a draft and user is not admin
+  // Redirigir si torneo es borrador y usuario no es admin
   try {
     const res = await api.get<{ data: { estado: string } }>(`/torneos/${torneoId.value}`)
     const estado = (res.data.data?.estado ?? '').toUpperCase()
@@ -92,7 +92,7 @@ onMounted(async () => {
       return
     }
   } catch {
-    // if we can't fetch the tournament, just continue and let the page handle it
+    // si falla la consulta, continuar y dejar que la página lo maneje
   }
   fetchAll(torneoId.value)
 })
@@ -122,7 +122,7 @@ onMounted(async () => {
 
     <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
-      <!-- Page header -->
+      <!-- Encabezado -->
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <button type="button" @click="router.back()"

@@ -2,12 +2,7 @@ package dev.mrraxyer.sportstournamentmanager.events;
 
 import org.springframework.context.ApplicationEvent;
 
-/**
- * Evento publicado cuando se registra o actualiza el resultado de un partido.
- * Este evento es escuchado por observadores como el servicio de tabla de
- * posiciones,
- * permitiendo la actualización reactiva de estadísticas.
- */
+/** Evento de resultado de partido. Escuchado por TablaPosicionesService para actualizar estadísticas. */
 public class PartidoResultadoEvent extends ApplicationEvent {
 
     private final Integer partidoId;
@@ -18,17 +13,6 @@ public class PartidoResultadoEvent extends ApplicationEvent {
     private final Integer golesVisitante;
     private final String grupo;
 
-    /**
-     * Crea un nuevo evento de resultado de partido
-     *
-     * @param source            Objeto que publica el evento
-     * @param partidoId         ID del partido
-     * @param torneoId          ID del torneo
-     * @param equipoLocalId     ID del equipo local
-     * @param equipoVisitanteId ID del equipo visitante
-     * @param golesLocal        Goles del equipo local
-     * @param golesVisitante    Goles del equipo visitante
-     */
     public PartidoResultadoEvent(Object source, Integer partidoId, Integer torneoId,
             Integer equipoLocalId, Integer equipoVisitanteId,
             Integer golesLocal, Integer golesVisitante,
@@ -43,7 +27,6 @@ public class PartidoResultadoEvent extends ApplicationEvent {
         this.grupo = grupo;
     }
 
-    // Getters
     public Integer getPartidoId() {
         return partidoId;
     }

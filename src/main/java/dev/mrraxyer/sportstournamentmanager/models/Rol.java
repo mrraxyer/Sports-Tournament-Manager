@@ -5,10 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Entidad Rol: Define los roles disponibles en el sistema.
- * Proporciona autorización para diferentes tipos de usuarios.
- */
+/** Entidad Rol. */
 @Entity
 @Table(name = "roles")
 @Data

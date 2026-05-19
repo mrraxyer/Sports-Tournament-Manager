@@ -4,11 +4,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
-/**
- * Clase Utilitaria Genérica ApiResponseBuilder<T>
- *
- * @param <T> Tipo de datos de la respuesta
- */
+/** Constructor fluido para ApiResponse. */
 public class ApiResponseBuilder<T> {
 
     private int status;
@@ -17,9 +13,6 @@ public class ApiResponseBuilder<T> {
     private String path;
     private List<String> errors;
 
-    /**
-     * Crea un builder para una respuesta exitosa
-     */
     public static <T> ApiResponseBuilder<T> success(T data) {
         ApiResponseBuilder<T> builder = new ApiResponseBuilder<>();
         builder.status = HttpStatus.OK.value();
@@ -28,9 +21,6 @@ public class ApiResponseBuilder<T> {
         return builder;
     }
 
-    /**
-     * Crea un builder para una respuesta de creación (201)
-     */
     public static <T> ApiResponseBuilder<T> created(T data) {
         ApiResponseBuilder<T> builder = new ApiResponseBuilder<>();
         builder.status = HttpStatus.CREATED.value();
@@ -39,9 +29,6 @@ public class ApiResponseBuilder<T> {
         return builder;
     }
 
-    /**
-     * Crea un builder para una respuesta de error
-     */
     public static <T> ApiResponseBuilder<T> error(String message, int status) {
         ApiResponseBuilder<T> builder = new ApiResponseBuilder<>();
         builder.status = status;
@@ -49,9 +36,6 @@ public class ApiResponseBuilder<T> {
         return builder;
     }
 
-    /**
-     * Crea un builder para una respuesta de error con lista de errores
-     */
     public static <T> ApiResponseBuilder<T> error(List<String> errors, int status) {
         ApiResponseBuilder<T> builder = new ApiResponseBuilder<>();
         builder.status = status;
@@ -60,17 +44,12 @@ public class ApiResponseBuilder<T> {
         return builder;
     }
 
-    /**
-     * Crea un builder para una respuesta sin contenido (204)
-     */
     public static <Void> ApiResponseBuilder<Void> noContent() {
         ApiResponseBuilder<Void> builder = new ApiResponseBuilder<>();
         builder.status = HttpStatus.NO_CONTENT.value();
         builder.message = "Operación completada sin contenido";
         return builder;
     }
-
-    // Métodos de construcción
 
     public ApiResponseBuilder<T> status(int status) {
         this.status = status;
@@ -97,9 +76,6 @@ public class ApiResponseBuilder<T> {
         return this;
     }
 
-    /**
-     * Construye la respuesta final
-     */
     public ApiResponse<T> build() {
         if (errors != null && !errors.isEmpty()) {
             return new ApiResponse<>(status, message, errors, path);

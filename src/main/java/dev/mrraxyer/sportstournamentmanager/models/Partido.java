@@ -6,11 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-/**
- * Entidad Partido: Registra el calendario y los resultados de los partidos del
- * torneo.
- * Incluye información de equipos participantes, goles y fecha.
- */
+/** Entidad Partido. */
 @Entity
 @Table(name = "partidos")
 @Data

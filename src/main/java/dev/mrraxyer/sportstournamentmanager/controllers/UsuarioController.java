@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Usuarios
- */
+/** Controlador de Usuarios. */
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
@@ -28,16 +26,11 @@ public class UsuarioController {
     @Autowired
     private RolRepository rolRepository;
 
-    /**
-     * Obtiene un usuario por ID
-     * Ejemplo de ApiResponse<T> con tipo específico Usuario
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Usuario>> obtenerUsuario(@PathVariable Integer id) {
         Optional<Usuario> usuario = usuarioService.findById(id);
 
         if (usuario.isPresent()) {
-            // Respuesta exitosa con datos
             ApiResponse<Usuario> response = ApiResponseBuilder
                 .success(usuario.get())
                 .message("Usuario encontrado")
@@ -45,7 +38,6 @@ public class UsuarioController {
                 .build();
             return ResponseEntity.ok(response);
         } else {
-            // Respuesta de error
             ApiResponse<Usuario> response = ApiResponseBuilder
                 .<Usuario>error("Usuario no encontrado", HttpStatus.NOT_FOUND.value())
                 .path("/api/usuarios/" + id)
@@ -54,10 +46,6 @@ public class UsuarioController {
         }
     }
 
-    /**
-     * Obtiene todos los usuarios
-     * Ejemplo de ApiResponse<T> con List<Usuario>
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Usuario>>> listarUsuarios() {
         List<Usuario> usuarios = usuarioService.findAll();
@@ -70,9 +58,6 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Crea o actualiza un usuario con rol (UPSERT)
-     */
     @PostMapping("/crear")
     public ResponseEntity<ApiResponse<Usuario>> crearUsuarioConRol(@RequestBody CreateUsuarioDto dto) {
         if (dto.getNombre() == null || dto.getNombre().trim().isEmpty()) {
@@ -125,9 +110,6 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Crea un nuevo usuario (legacy endpoint)
-     */
     @PostMapping
     public ResponseEntity<ApiResponse<Usuario>> crearUsuario(@RequestBody Usuario usuario) {
         if (usuarioService.findByCorreo(usuario.getCorreo()).isPresent()) {
@@ -148,9 +130,6 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Obtiene usuarios por rol
-     */
     @GetMapping("/por-rol")
     public ResponseEntity<ApiResponse<List<Usuario>>> usuariosPorRol(@RequestParam String rolNombre) {
         Optional<Rol> rol = rolRepository.findByNombre(rolNombre);
@@ -175,10 +154,6 @@ public class UsuarioController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Actualiza un usuario existente
-     * Ejemplo de actualización con BaseService genérico
-     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Usuario>> actualizarUsuario(
             @PathVariable Integer id,
@@ -229,10 +204,6 @@ public class UsuarioController {
         }
     }
 
-    /**
-     * Elimina un usuario
-     * Ejemplo de operación sin contenido (204)
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Integer id) {
         if (usuarioService.existsById(id)) {
@@ -243,10 +214,6 @@ public class UsuarioController {
         }
     }
 
-    /**
-     * Busca usuarios por correo
-     * Ejemplo de método específico de UsuarioService
-     */
     @GetMapping("/buscar/correo")
     public ResponseEntity<ApiResponse<Usuario>> buscarPorCorreo(
             @RequestParam String correo) {

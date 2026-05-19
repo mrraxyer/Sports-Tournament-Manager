@@ -40,16 +40,14 @@ async function submitLogin() {
     feedback.message = error instanceof Error ? error.message : 'No fue posible iniciar sesión.'
     form.contrasena = ''
 
-    // Cancel any pending timeout
+    // Cancelar timeout previo y reiniciar con duración extendida
     if (dismissTimeoutId.value) {
       clearTimeout(dismissTimeoutId.value)
-      // When retrying after an error, extend the timeout duration
       dismissTimeoutId.value = setTimeout(() => {
         feedback.type = ''
         feedback.message = ''
       }, 8000)
     } else {
-      // Auto-dismiss error after 5 seconds on initial error
       dismissTimeoutId.value = setTimeout(() => {
         feedback.type = ''
         feedback.message = ''
@@ -58,7 +56,7 @@ async function submitLogin() {
   }
 }
 
-// Cleanup timeout on component unmount
+// Limpiar timeout al desmontar
 onBeforeUnmount(() => {
   if (dismissTimeoutId.value) {
     clearTimeout(dismissTimeoutId.value)

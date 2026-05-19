@@ -6,10 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-/**
- * Entidad Jugador: Almacena la información de los jugadores asociados a equipos específicos.
- * Incluye nombre y número de camiseta.
- */
+/** Entidad Jugador. */
 @Entity
 @Table(name = "jugadores")
 @Data

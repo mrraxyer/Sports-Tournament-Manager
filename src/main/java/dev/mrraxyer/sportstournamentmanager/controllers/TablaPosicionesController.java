@@ -14,11 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Tabla de Posiciones
- * Permite consultar las estadísticas actualizadas reactivamente
- * cuando se registran resultados de partidos
- */
+/** Controlador de Tabla de Posiciones. */
 @RestController
 @RequestMapping("/api/tabla-posiciones")
 public class TablaPosicionesController {
@@ -32,12 +28,6 @@ public class TablaPosicionesController {
     @Autowired
     private dev.mrraxyer.sportstournamentmanager.repositories.PartidoRepository partidoRepository;
 
-    /**
-     * Obtiene la tabla de posiciones de un torneo específico
-     * Ordenada por puntos (descendente) y diferencia de goles
-     *
-     * @param torneoId ID del torneo
-     */
     @GetMapping("/torneo/{torneoId}")
     public ResponseEntity<ApiResponse<List<TablaPosiciones>>> obtenerTablaPorTorneo(
             @PathVariable Integer torneoId) {
@@ -56,18 +46,16 @@ public class TablaPosicionesController {
         List<TablaPosiciones> posiciones = tablaPosicionesService.findAll().stream()
                 .filter(tp -> tp.getTorneo().getTorneosId().equals(torneoId))
                 .sorted((a, b) -> {
-                    // 1) puntos DESC
+                    // Criterios: puntos DESC, diferencia de goles DESC, head-to-head, goles a favor DESC
                     int cmp = Integer.compare(b.getPuntos(), a.getPuntos());
                     if (cmp != 0)
                         return cmp;
 
-                    // 2) diferencia de goles DESC
                     int difA = a.getGolesAFavor() - a.getGolesEnContra();
                     int difB = b.getGolesAFavor() - b.getGolesEnContra();
                     if (difA != difB)
                         return Integer.compare(difB, difA);
 
-                    // 3) enfrentamiento directo (head-to-head)
                     try {
                         Torneo torneoA = a.getTorneo();
                         List<dev.mrraxyer.sportstournamentmanager.models.Partido> h2h = partidoRepository
@@ -108,10 +96,9 @@ public class TablaPosicionesController {
                         if (golesA != golesB)
                             return Integer.compare(golesB, golesA);
                     } catch (Exception ex) {
-                        // en caso de error en consulta head-to-head, continuar con siguiente criterio
+                        // continuar con siguiente criterio si falla head-to-head
                     }
 
-                    // 4) goles a favor DESC
                     return Integer.compare(b.getGolesAFavor(), a.getGolesAFavor());
                 })
                 .toList();
@@ -124,12 +111,6 @@ public class TablaPosicionesController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene la posición de un equipo específico en un torneo
-     *
-     * @param torneoId ID del torneo
-     * @param equipoId ID del equipo
-     */
     @GetMapping("/torneo/{torneoId}/equipo/{equipoId}")
     public ResponseEntity<ApiResponse<TablaPosiciones>> obtenerPosicionEquipo(
             @PathVariable Integer torneoId,
@@ -156,9 +137,6 @@ public class TablaPosicionesController {
         }
     }
 
-    /**
-     * Obtiene todas las posiciones
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<TablaPosiciones>>> listarTodasLasPosiciones() {
         List<TablaPosiciones> posiciones = tablaPosicionesService.findAll();
@@ -171,9 +149,6 @@ public class TablaPosicionesController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene una posición específica por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TablaPosiciones>> obtenerPosicion(@PathVariable Integer id) {
         Optional<TablaPosiciones> posicion = tablaPosicionesService.findById(id);

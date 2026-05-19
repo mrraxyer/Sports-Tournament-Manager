@@ -4,11 +4,7 @@ import type { Partido } from '../api/matches'
 
 const props = defineProps<{ partidos: Partido[] }>()
 
-/**
- * Agrupa los partidos por fecha (YYYY-MM-DD) y los ordena cronológicamente.
- * Cada grupo representa una jornada.
- * @returns {{ date: string; index: number; matches: Partido[] }[]}
- */
+// Agrupa partidos por fecha (jornadas), ordenados cronológicamente
 const jornadas = computed(() => {
   const map = new Map<string, Partido[]>()
   for (const p of props.partidos) {

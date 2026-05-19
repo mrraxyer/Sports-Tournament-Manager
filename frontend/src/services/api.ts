@@ -37,8 +37,7 @@ api.interceptors.response.use(
     if (!axios.isAxiosError(error)) return Promise.reject(error)
 
     const originalRequest = (error.config ?? {}) as any
-    // If unauthorized and request not yet retried, try refresh flow
-    // Skip refresh/redirect for login endpoint - let the login component handle 401 errors
+    // Si 401 y no reintentado, refrescar token (omitir en endpoint de login)
     const isLoginEndpoint = originalRequest.url?.includes('/auth/login')
     if (error.response?.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
       originalRequest._retry = true
@@ -50,7 +49,7 @@ api.interceptors.response.use(
             const session = JSON.parse(rawSession) as { accessToken?: string; tokenType?: string }
 
             if (session.accessToken) {
-              // Call refresh endpoint with the current token using a plain axios instance
+              // Usar instancia axios separada para evitar recursión
               const refreshUrl = (api.defaults.baseURL ?? '/api') + '/auth/refresh'
               const refreshResp = await axios.post(
                 refreshUrl,
@@ -64,7 +63,7 @@ api.interceptors.response.use(
 
               const newPayload = refreshResp?.data?.data
               if (newPayload?.accessToken) {
-                // persist new session and retry original request with new header
+                // Guardar nueva sesión y reintentar petición original
                 window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newPayload))
                 originalRequest.headers = originalRequest.headers ?? {}
                 originalRequest.headers.Authorization = `${newPayload.tokenType ?? 'Bearer'} ${newPayload.accessToken}`
@@ -72,10 +71,10 @@ api.interceptors.response.use(
               }
             }
           } catch (e) {
-            // refresh failed — fall through to logout
+            // fallo de refresco, cerrar sesión
           }
         }
-        // no session or refresh failed: clear and redirect
+        // Sin sesión o refresco fallido: redirigir a login
         window.localStorage.removeItem(STORAGE_KEY)
         window.location.href = '/login'
       }

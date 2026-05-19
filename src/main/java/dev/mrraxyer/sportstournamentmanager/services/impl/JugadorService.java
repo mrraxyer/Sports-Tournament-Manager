@@ -7,11 +7,7 @@ import dev.mrraxyer.sportstournamentmanager.services.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * Servicio de Jugador
- *
- * Extiende BaseService<Jugador, Integer> para herdar todas las operaciones CRUD genéricas.
- */
+/** Servicio de Jugador. */
 @Service
 public class JugadorService extends BaseService<Jugador, Integer> {
 

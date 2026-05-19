@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador de Roles
- */
+/** Controlador de Roles. */
 @RestController
 @RequestMapping("/api/roles")
 public class RolController {
@@ -21,9 +19,6 @@ public class RolController {
     @Autowired
     private RolRepository rolRepository;
 
-    /**
-     * Obtiene todos los roles
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<Rol>>> listarRoles() {
         List<Rol> roles = rolRepository.findAll();
@@ -36,9 +31,6 @@ public class RolController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Obtiene un rol por ID
-     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Rol>> obtenerRol(@PathVariable Integer id) {
         Optional<Rol> rol = rolRepository.findById(id);

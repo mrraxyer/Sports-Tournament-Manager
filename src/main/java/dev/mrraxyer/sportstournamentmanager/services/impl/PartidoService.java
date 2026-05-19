@@ -15,15 +15,7 @@ import java.util.List;
 
 import java.util.List;
 
-/**
- * Servicio de Partido
- *
- * Extiende BaseService<Partido, Integer> para herdar todas las operaciones CRUD
- * genéricas.
- * Adiciona funcionalidad de publicación de eventos cuando se registra o
- * actualiza
- * el resultado de un partido, habilitando patrones reactivos.
- */
+/** Servicio de Partido. Publica eventos al registrar resultados. */
 @Service
 public class PartidoService extends BaseService<Partido, Integer> {
 
@@ -38,19 +30,11 @@ public class PartidoService extends BaseService<Partido, Integer> {
         return partidoRepository;
     }
 
-    /**
-     * Guarda un partido y publica un evento si tiene resultados
-     * El evento será escuchado por observadores como TablaPosicionesService
-     *
-     * @param partido el partido a guardar
-     * @return el partido guardado
-     */
+    /** Guarda el partido y publica evento de resultado si está marcado como jugado. */
     @Override
     public Partido save(Partido partido) {
         Partido partidoGuardado = super.save(partido);
 
-        // Publicar evento sólo cuando el partido haya sido marcado como jugado
-        // y tenga ambos equipos y torneo definido. Además incluye el campo grupo.
         if (Boolean.TRUE.equals(partidoGuardado.getJugado())
                 && partidoGuardado.getEquipoLocal() != null
                 && partidoGuardado.getEquipoVisitante() != null
@@ -67,7 +51,7 @@ public class PartidoService extends BaseService<Partido, Integer> {
                     partidoGuardado.getGrupo());
 
             eventPublisher.publishEvent(evento);
-            // Intento de asignar el ganador al siguiente partido disponible (si existe)
+            // Asignar ganador al siguiente partido del bracket (eliminación directa)
             try {
                 Equipo ganador = null;
                 if (partidoGuardado.getGolesLocal() != null && partidoGuardado.getGolesVisitante() != null) {
@@ -79,12 +63,10 @@ public class PartidoService extends BaseService<Partido, Integer> {
                 }
 
                 if (ganador != null) {
-                    // Buscar próximos partidos con huecos
                     List<Partido> siguientes = partidoRepository.findNextMatchesWithEmptySlot(
                             partidoGuardado.getTorneo(), partidoGuardado.getFechaPartido());
                     if (siguientes != null && !siguientes.isEmpty()) {
                         for (Partido siguiente : siguientes) {
-                            // Evitar duplicar si el equipo ya está asignado
                             if (siguiente.getEquipoLocal() != null
                                     && siguiente.getEquipoLocal().getEquiposId().equals(ganador.getEquiposId()))
                                 continue;
@@ -102,7 +84,6 @@ public class PartidoService extends BaseService<Partido, Integer> {
                             }
 
                             if (assigned) {
-                                // Guardar el partido siguiente con el equipo asignado
                                 super.save(siguiente);
                                 break;
                             }
@@ -117,13 +98,6 @@ public class PartidoService extends BaseService<Partido, Integer> {
         return partidoGuardado;
     }
 
-    /**
-     * Busca partidos por torneo
-     * Útil para obtener el calendario de un torneo
-     *
-     * @param torneo el torneo
-     * @return lista de partidos del torneo
-     */
     public List<Partido> findByTorneo(Torneo torneo) {
         return partidoRepository.findByTorneo(torneo);
     }

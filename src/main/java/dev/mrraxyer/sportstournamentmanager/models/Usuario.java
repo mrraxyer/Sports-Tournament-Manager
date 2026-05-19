@@ -5,10 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Entidad Usuario: Almacena la información de autenticación y perfil de los usuarios del sistema.
- * Contiene datos personales, credenciales y asignación de roles.
- */
+/** Entidad Usuario. */
 @Entity
 @Table(name = "usuarios")
 @Data

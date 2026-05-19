@@ -2,10 +2,6 @@ import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import type { Partido, TablaPosiciones } from '../api/matches'
 
-/**
- * Genera y descarga un PDF con el resumen del torneo:
- * portada con estadísticas, calendario de partidos y tabla de posiciones.
- */
 export function useTournamentPdf() {
 
   function buildPdf(
@@ -18,7 +14,7 @@ export function useTournamentPdf() {
     const PAGE_W = doc.internal.pageSize.getWidth()
     const MARGIN = 14
 
-    // ── Helper: small grey section header ──────────────────────────────────
+    // Encabezado de sección
     function sectionTitle(text: string, y: number): number {
       doc.setFontSize(11)
       doc.setFont('helvetica', 'bold')
@@ -29,7 +25,7 @@ export function useTournamentPdf() {
       return y + 8
     }
 
-    // ── Cover ───────────────────────────────────────────────────────────────
+    // Portada
     doc.setFillColor(30, 41, 59)
     doc.rect(0, 0, PAGE_W, 50, 'F')
 
@@ -46,7 +42,7 @@ export function useTournamentPdf() {
     const generado = new Date().toLocaleDateString('es-ES', { dateStyle: 'long' })
     doc.text(`Generado el ${generado}`, PAGE_W / 2, 39, { align: 'center' })
 
-    // Stats summary
+    // Resumen de estadísticas
     const played = partidos.filter(p => p.jugado).length
     const pending = partidos.filter(p => !p.jugado).length
     const goals = partidos.filter(p => p.jugado).reduce((s, p) => s + p.golesLocal + p.golesVisitante, 0)
@@ -75,7 +71,7 @@ export function useTournamentPdf() {
 
     let curY = 88
 
-    // ── Partidos (grouped by fase) ──────────────────────────────────────────
+    // Partidos agrupados por fase
     curY = sectionTitle('Calendario de Partidos', curY)
 
     const rows = partidos.map(p => [
@@ -105,7 +101,7 @@ export function useTournamentPdf() {
       },
     })
 
-    // ── Standings ───────────────────────────────────────────────────────────
+    // Tabla de posiciones
     if (standings.length > 0) {
       curY = (doc as any).lastAutoTable.finalY + 10
       curY = sectionTitle('Tabla de Posiciones', curY)
@@ -142,7 +138,7 @@ export function useTournamentPdf() {
       })
     }
 
-    // ── Page numbers ────────────────────────────────────────────────────────
+    // Numeración de páginas
     const pageCount = (doc.internal as any).getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
