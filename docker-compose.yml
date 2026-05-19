@@ -10,6 +10,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./src/main/resources/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5433:5432"
     networks:
       - sports-network
     healthcheck:
@@ -35,7 +37,9 @@ services:
       MASTER_USERNAME: ${MASTER_USERNAME:?MASTER_USERNAME is required}
       MASTER_EMAIL: ${MASTER_EMAIL:?MASTER_EMAIL is required}
       MASTER_PASSWORD: ${MASTER_PASSWORD:?MASTER_PASSWORD is required}
-      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms512m}
+    ports:
+      - "9000:8080"
     networks:
       - sports-network
     restart: unless-stopped
@@ -50,7 +54,7 @@ services:
     depends_on:
       - app
     ports:
-      - "5173:80"
+      - "5080:80"
     networks:
       - sports-network
     restart: unless-stopped
