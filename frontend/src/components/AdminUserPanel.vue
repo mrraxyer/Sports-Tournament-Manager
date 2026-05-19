@@ -44,6 +44,8 @@ const form = reactive<FormData>({
 })
 
 const showModal = ref(false)
+const isEditing = ref(false)
+const editingUserId = ref<number | null>(null)
 const isAdmin = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'ADMIN')
 
 const rolNombres: Record<string, string> = {
@@ -85,6 +87,26 @@ async function fetchRoles() {
   }
 }
 
+function openCreateModal() {
+  isEditing.value = false
+  editingUserId.value = null
+  form.nombre = ''
+  form.correo = ''
+  form.contrasena = ''
+  form.rolId = null
+  showModal.value = true
+}
+
+function openEditModal(usuario: Usuario) {
+  isEditing.value = true
+  editingUserId.value = usuario.usuariosId
+  form.nombre = usuario.nombre
+  form.correo = usuario.correo
+  form.contrasena = ''
+  form.rolId = usuario.rol?.rolesId ?? null
+  showModal.value = true
+}
+
 async function submitForm() {
   feedback.type = ''
   feedback.message = ''
@@ -101,9 +123,9 @@ async function submitForm() {
     return
   }
 
-  if (!form.contrasena.trim()) {
+  if (!form.contrasena.trim() && !isEditing.value) {
     feedback.type = 'error'
-    feedback.message = 'Contraseña es requerida'
+    feedback.message = 'Contraseña es requerida para nuevos usuarios'
     return
   }
 
@@ -122,21 +144,23 @@ async function submitForm() {
       rolId: form.rolId,
     }
 
-    const response = await api.post('/usuarios/crear', payload)
-    const message = response.data.message || 'Usuario creado exitosamente'
+    let message = ''
+    if (isEditing.value && editingUserId.value) {
+      const response = await api.put(`/usuarios/${editingUserId.value}`, payload)
+      message = response.data.message || 'Usuario actualizado exitosamente'
+    } else {
+      const response = await api.post('/usuarios/crear', payload)
+      message = response.data.message || 'Usuario creado exitosamente'
+    }
 
     feedback.type = 'success'
     feedback.message = message
-    form.nombre = ''
-    form.correo = ''
-    form.contrasena = ''
-    form.rolId = null
     showModal.value = false
 
     await fetchUsuarios()
   } catch (error) {
     feedback.type = 'error'
-    feedback.message = error instanceof Error ? error.message : 'Error al crear usuario'
+    feedback.message = error instanceof Error ? error.message : 'Error al guardar usuario'
   } finally {
     loading.submit = false
   }
@@ -183,7 +207,7 @@ onMounted(() => {
         <h2 class="text-2xl font-semibold text-gray-900">Crear Nuevo Usuario</h2>
       </header>
 
-      <button @click="showModal = true"
+      <button @click="openCreateModal"
         class="px-4 py-2.5 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 disabled:opacity-60 cursor-pointer font-medium text-sm">
         Crear Usuario
       </button>
@@ -232,13 +256,19 @@ onMounted(() => {
                 {{ formatRol(usuario.rol?.nombre) }}
               </td>
               <td class="px-6 py-3 text-center">
-                <button
-                  :disabled="usuario.usuariosId === auth.session?.usuario.usuariosId"
-                  @click="eliminarUsuario(usuario.usuariosId)"
-                  :class="usuario.usuariosId === auth.session?.usuario.usuariosId ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700'"
-                  class="px-3 py-1.5 bg-red-600 text-white text-sm rounded cursor-pointer disabled:cursor-not-allowed">
-                  Eliminar
-                </button>
+                <div class="flex gap-2 justify-center">
+                  <button @click="openEditModal(usuario)"
+                    class="px-3 py-1.5 bg-amber-500 text-white text-sm rounded hover:bg-amber-600 cursor-pointer">
+                    Editar
+                  </button>
+                  <button
+                    :disabled="usuario.usuariosId === auth.session?.usuario.usuariosId"
+                    @click="eliminarUsuario(usuario.usuariosId)"
+                    :class="usuario.usuariosId === auth.session?.usuario.usuariosId ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700'"
+                    class="px-3 py-1.5 bg-red-600 text-white text-sm rounded cursor-pointer disabled:cursor-not-allowed">
+                    Eliminar
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -247,7 +277,7 @@ onMounted(() => {
     </section>
 
     <!-- Create User Modal -->
-    <FormModal v-model="showModal" title="Crear Usuario" @submit="submitForm">
+    <FormModal v-model="showModal" :title="isEditing ? 'Editar Usuario' : 'Crear Usuario'" @submit="submitForm">
       <div class="space-y-4">
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Nombre</span>
@@ -262,7 +292,10 @@ onMounted(() => {
         </label>
 
         <label class="block">
-          <span class="text-sm font-medium text-gray-700">Contraseña</span>
+          <span class="text-sm font-medium text-gray-700">
+            Contraseña
+            <span v-if="isEditing" class="text-xs text-gray-500 font-normal ml-1">(Dejar en blanco para no cambiar)</span>
+          </span>
           <input v-model="form.contrasena" type="password"
             class="mt-2 w-full px-3 py-2 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
         </label>

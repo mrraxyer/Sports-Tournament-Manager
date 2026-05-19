@@ -182,13 +182,37 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Usuario>> actualizarUsuario(
             @PathVariable Integer id,
-            @RequestBody Usuario usuarioActualizado) {
+            @RequestBody CreateUsuarioDto dto) {
 
-        Optional<Usuario> usuarioExistente = usuarioService.findById(id);
+        Optional<Usuario> usuarioExistenteOpt = usuarioService.findById(id);
 
-        if (usuarioExistente.isPresent()) {
-            usuarioActualizado.setUsuariosId(id);
-            Usuario usuarioGuardado = usuarioService.save(usuarioActualizado);
+        if (usuarioExistenteOpt.isPresent()) {
+            Usuario usuarioExistente = usuarioExistenteOpt.get();
+
+            // Validar que el nuevo correo no esté en uso por OTRO usuario
+            if (!usuarioExistente.getCorreo().equals(dto.getCorreo())) {
+                Optional<Usuario> otroUsuario = usuarioService.findByCorreo(dto.getCorreo());
+                if (otroUsuario.isPresent()) {
+                    ApiResponse<Usuario> response = ApiResponseBuilder
+                        .<Usuario>error("El correo ya está asociado a otro usuario", HttpStatus.BAD_REQUEST.value())
+                        .path("/api/usuarios/" + id)
+                        .build();
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                }
+            }
+
+            usuarioExistente.setNombre(dto.getNombre());
+            usuarioExistente.setCorreo(dto.getCorreo());
+            
+            if (dto.getContrasena() != null && !dto.getContrasena().trim().isEmpty()) {
+                usuarioExistente.setContrasena(dto.getContrasena());
+            }
+
+            if (dto.getRolId() != null) {
+                rolRepository.findById(dto.getRolId()).ifPresent(usuarioExistente::setRol);
+            }
+
+            Usuario usuarioGuardado = usuarioService.save(usuarioExistente);
 
             ApiResponse<Usuario> response = ApiResponseBuilder
                 .success(usuarioGuardado)
