@@ -41,6 +41,7 @@ const form = reactive<FormData>({
 
 const showModal = ref(false)
 const selectedEquipoId = ref<number | null>(null)
+const editingJugadorId = ref<number | null>(null)
 const isCaptain = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'TEAM_CAPTAIN')
 const usuarioId = computed(() => auth.session?.usuario.usuariosId)
 
@@ -78,33 +79,53 @@ async function submitForm() {
 
   loading.submit = true
   try {
-    const payload = {
-      nombre: form.nombre.trim(),
-      numeroCamiseta: form.numeroCamiseta,
-      equipo: {
-        equiposId: selectedEquipoId.value,
-      },
+    if (editingJugadorId.value) {
+      const payload = {
+        nombre: form.nombre.trim(),
+        numeroCamiseta: form.numeroCamiseta,
+      }
+      await api.put(`/jugadores/${editingJugadorId.value}`, payload)
+      feedback.type = 'success'
+      feedback.message = 'Jugador actualizado exitosamente'
+    } else {
+      const payload = {
+        nombre: form.nombre.trim(),
+        numeroCamiseta: form.numeroCamiseta,
+        equipo: {
+          equiposId: selectedEquipoId.value,
+        },
+      }
+      await api.post('/jugadores', payload)
+      feedback.type = 'success'
+      feedback.message = 'Jugador creado exitosamente'
     }
 
-    await api.post('/jugadores', payload)
-
-    feedback.type = 'success'
-    feedback.message = 'Jugador creado exitosamente'
     form.nombre = ''
     form.numeroCamiseta = null
     showModal.value = false
+    editingJugadorId.value = null
 
     await fetchEquipos()
   } catch (error) {
     feedback.type = 'error'
-    feedback.message = error instanceof Error ? error.message : 'Error al crear jugador'
+    feedback.message = error instanceof Error ? error.message : 'Error al guardar jugador'
   } finally {
     loading.submit = false
   }
 }
 
-function openModal(equipoId: number) {
+function openCreateModal(equipoId: number) {
   selectedEquipoId.value = equipoId
+  editingJugadorId.value = null
+  form.nombre = ''
+  form.numeroCamiseta = null
+  showModal.value = true
+}
+
+function openEditModal(jugador: Jugador) {
+  editingJugadorId.value = jugador.jugadoresId
+  form.nombre = jugador.nombre
+  form.numeroCamiseta = jugador.numeroCamiseta
   showModal.value = true
 }
 
@@ -152,7 +173,7 @@ onMounted(() => {
               <h3 class="text-xl font-semibold text-gray-900">{{ equipo.nombre }}</h3>
               <p class="text-sm text-gray-600 mt-1">Torneo: {{ equipo.torneo?.nombre }}</p>
             </div>
-            <button @click="openModal(equipo.equiposId)"
+            <button @click="openCreateModal(equipo.equiposId)"
               class="px-4 py-2 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 cursor-pointer font-medium text-sm">
               Agregar Jugador
             </button>
@@ -167,6 +188,7 @@ onMounted(() => {
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Número de Camiseta</th>
+                <th class="px-6 py-3 text-right text-sm font-semibold text-gray-900">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -176,6 +198,9 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-900">{{ jugador.nombre }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">
                   {{ jugador.numeroCamiseta ?? '-' }}
+                </td>
+                <td class="px-6 py-3 text-right text-sm font-medium">
+                  <button @click="openEditModal(jugador)" class="text-blue-600 hover:text-blue-900 cursor-pointer">Editar</button>
                 </td>
               </tr>
             </tbody>
@@ -189,8 +214,8 @@ onMounted(() => {
       </section>
     </div>
 
-    <!-- Create Player Modal -->
-    <FormModal v-model="showModal" title="Agregar Jugador" @submit="submitForm">
+    <!-- Create / Edit Player Modal -->
+    <FormModal v-model="showModal" :title="editingJugadorId ? 'Editar Jugador' : 'Agregar Jugador'" @submit="submitForm">
       <div class="space-y-4">
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Nombre del Jugador</span>
