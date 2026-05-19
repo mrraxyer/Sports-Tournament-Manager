@@ -40,10 +40,9 @@ const routes = [
   },
   {
     path: '/',
-    redirect: () => {
-      const auth = useAuthStore()
-      return auth.isAuthenticated ? '/dashboard' : '/login'
-    }
+    name: 'Home',
+    component: () => import('../pages/HomePage.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 
