@@ -8,6 +8,7 @@ import Navbar from '../components/Navbar.vue'
 import TournamentBracketRoundRobin from '../components/TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from '../components/TournamentBracketElimination.vue'
 import TournamentBracketGroups from '../components/TournamentBracketGroups.vue'
+import api from '../services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -79,8 +80,20 @@ const formatDate = (date: string) => {
   return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date))
 }
 
-onMounted(() => {
+onMounted(async () => {
   auth.hydrateSession()
+  // Guard: redirect to home if tournament is a draft and user is not admin
+  try {
+    const res = await api.get<{ data: { estado: string } }>(`/torneos/${torneoId.value}`)
+    const estado = (res.data.data?.estado ?? '').toUpperCase()
+    const isAdmin = auth.session?.usuario?.rol === 'ADMIN'
+    if (estado === 'BORRADOR' && !isAdmin) {
+      router.replace('/')
+      return
+    }
+  } catch {
+    // if we can't fetch the tournament, just continue and let the page handle it
+  }
   fetchAll(torneoId.value)
 })
 </script>

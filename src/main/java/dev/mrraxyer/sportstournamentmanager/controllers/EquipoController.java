@@ -119,4 +119,21 @@ public class EquipoController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
+    /**
+     * Obtiene equipos donde el usuario es capitán
+     */
+    @GetMapping("/capitan/{capitanId}")
+    public ResponseEntity<ApiResponse<List<Equipo>>> equiposPorCapitan(@PathVariable Integer capitanId) {
+        List<Equipo> equipos = equipoService.findAll().stream()
+            .filter(e -> e.getCapitan() != null && e.getCapitan().getUsuariosId().equals(capitanId))
+            .toList();
+
+        ApiResponse<List<Equipo>> response = ApiResponseBuilder
+            .success(equipos)
+            .message("Equipos del capitán: " + equipos.size())
+            .path("/api/equipos/capitan/" + capitanId)
+            .build();
+        return ResponseEntity.ok(response);
+    }
 }

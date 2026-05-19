@@ -9,41 +9,52 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/dashboard',
+    path: '/panel',
     name: 'Dashboard',
     component: () => import('../pages/DashboardPage.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/tournaments',
+    path: '/torneos',
     name: 'TournamentManager',
     component: () => import('../pages/TournamentManager.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/team-management',
+    path: '/gestion-equipos',
     name: 'TeamManagement',
     component: () => import('../pages/TeamManagement.vue'),
     meta: { requiresAuth: true }
   },
   {
-    path: '/tournaments/:torneoId/matches',
+    path: '/torneos/:torneoId/partidos',
     name: 'MatchSchedule',
     component: () => import('../pages/MatchSchedulePage.vue'),
     meta: { requiresAuth: false }
   },
   {
-    path: '/admin/matches',
+    path: '/administrador/partidos',
     name: 'AdminMatchManager',
     component: () => import('../pages/AdminMatchManagerPage.vue'),
     meta: { requiresAuth: true }
   },
   {
+    path: '/administrador/usuarios',
+    name: 'AdminUserManager',
+    component: () => import('../pages/AdminUserManagerPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/capitan/jugadores',
+    name: 'CaptainPlayerManager',
+    component: () => import('../pages/CaptainPlayerManagerPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
-    redirect: () => {
-      const auth = useAuthStore()
-      return auth.isAuthenticated ? '/dashboard' : '/login'
-    }
+    name: 'Home',
+    component: () => import('../pages/HomePage.vue'),
+    meta: { requiresAuth: false }
   }
 ]
 
@@ -57,7 +68,7 @@ router.beforeEach((to, _from, next) => {
   const requiresAuth = to.meta.requiresAuth as boolean | undefined
 
   if (to.path === '/login' && auth.isAuthenticated) {
-    next('/dashboard')
+    next('/panel')
   } else if (requiresAuth && !auth.isAuthenticated) {
     next('/login')
   } else {

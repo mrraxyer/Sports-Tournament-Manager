@@ -10,7 +10,7 @@ import FormModal from './modals/FormModal.vue'
 const auth = useAuthStore()
 
 /** Verdadero cuando el usuario autenticado tiene el rol ADMIN. */
-const isAdmin = computed(() => auth.session?.usuario.rol === 'ADMIN')
+const isAdmin = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'ADMIN')
 
 /**
  * Verdadero cuando el torneo seleccionado es de formato round-robin o liga.

@@ -234,7 +234,7 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.estado ?? '-' }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
                 <td class="px-6 py-3 text-center">
-                  <router-link :to="`/tournaments/${tournament.torneosId}/matches`"
+                  <router-link :to="`/torneos/${tournament.torneosId}/partidos`"
                     class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">Ver
                     partidos</router-link>
                 </td>
@@ -297,7 +297,7 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.tipoFormato }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
                 <td class="px-6 py-3 text-center">
-                  <router-link :to="`/tournaments/${tournament.torneosId}/matches`"
+                  <router-link :to="`/torneos/${tournament.torneosId}/partidos`"
                     class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">Ver
                     partidos</router-link>
                 </td>
