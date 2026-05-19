@@ -99,6 +99,31 @@ export function useAdminMatches() {
   }
 
   /**
+   * Llama al endpoint de avanzar-eliminatoria para generar los cruces de la fase
+   * knockout a partir de la clasificación actual (grupos o round-robin).
+   * @param tournamentId ID del torneo
+   * @param clasificados Número total de clasificados (grupos: por grupo, RR: total)
+   */
+  async function generateEliminationPhase(tournamentId: number, clasificados = 2): Promise<void> {
+    loading.generate = true
+    feedback.type = ''
+    feedback.message = ''
+    try {
+      await api.post(`/torneos/${tournamentId}/avanzar-eliminatoria`, null, {
+        params: { clasificadosPorGrupo: clasificados }
+      })
+      feedback.type = 'success'
+      feedback.message = 'Fase eliminatoria generada correctamente'
+      await fetchTournamentMatches(tournamentId)
+    } catch (error) {
+      feedback.type = 'error'
+      feedback.message = error instanceof Error ? error.message : 'Error al generar eliminatoria'
+    } finally {
+      loading.generate = false
+    }
+  }
+
+  /**
    * Guarda el resultado de un partido y recarga la lista del torneo seleccionado.
    * @param {number} matchId - ID del partido a actualizar.
    * @param {number} localGoals - Goles anotados por el equipo local.
@@ -180,6 +205,7 @@ export function useAdminMatches() {
     fetchTournaments,
     fetchTournamentMatches,
     generateTournamentSchedule,
+    generateEliminationPhase,
     saveMatchScore,
     showRescheduleModal,
     rescheduleDate,

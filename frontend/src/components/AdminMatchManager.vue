@@ -30,6 +30,10 @@ const hasGroupMatches = computed(() => {
   return partidos.some(p => p.grupo != null)
 })
 
+const eliminationMatches = computed(() => partidos.filter(p => p.bracketIndex != null))
+const regularMatches = computed(() => partidos.filter(p => p.bracketIndex == null))
+const hasEliminationMatches = computed(() => eliminationMatches.value.length > 0)
+
 const {
   tournaments,
   selectedTournamentId,
@@ -39,6 +43,7 @@ const {
   fetchTournaments,
   fetchTournamentMatches,
   generateTournamentSchedule,
+  generateEliminationPhase,
   saveMatchScore,
   showRescheduleModal,
   rescheduleDate,
@@ -46,6 +51,10 @@ const {
   rescheduleMatch,
   deleteMatch,
 } = useAdminMatches()
+
+// Número de clasificados para el modal de avance
+const clasificadosInput = ref(2)
+const showAdvanceModal = ref(false)
 
 const showResultModal = ref(false)
 const resultMatchId = ref<number | null>(null)
@@ -111,6 +120,14 @@ onMounted(() => {
           <span v-if="loading.generate">Generando…</span>
           <span v-else>Generar Calendario</span>
         </button>
+
+        <!-- Botón de avanzar a eliminatoria: solo si es grupos o RR, hay partidos y aún no existe bracket -->
+        <button v-if="(isGroupFormat || isRoundRobin) && partidos.length > 0 && !hasEliminationMatches"
+          type="button" :disabled="loading.generate"
+          @click="showAdvanceModal = true"
+          class="px-4 py-2.5 bg-purple-600 text-white border border-purple-600 rounded hover:bg-purple-700 disabled:opacity-60 font-medium text-sm cursor-pointer">
+          Avanzar a Eliminatoria
+        </button>
       </div>
     </section>
 
@@ -171,7 +188,8 @@ onMounted(() => {
               <!-- Acción -->
               <td class="px-6 py-3 text-center">
                 <div class="flex gap-2 justify-center flex-wrap">
-                  <button type="button" @click="openResultModal(partido.partidosId, partido.golesLocal, partido.golesVisitante)"
+                  <button type="button"
+                    @click="openResultModal(partido.partidosId, partido.golesLocal, partido.golesVisitante)"
                     class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 cursor-pointer">
                     {{ partido.jugado ? 'Editar Resultado' : 'Registrar Resultado' }}
                   </button>
@@ -191,12 +209,22 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Bracket del torneo seleccionado -->
-    <TournamentBracketGroups v-if="selectedTournamentId !== null && partidos.length > 0 && isGroupFormat && hasGroupMatches"
-      :partidos="partidos" />
-    <TournamentBracketRoundRobin v-else-if="selectedTournamentId !== null && partidos.length > 0 && isRoundRobin"
-      :partidos="partidos" />
-    <TournamentBracketElimination v-else-if="selectedTournamentId !== null && partidos.length > 0"
+    <!-- Fase regular: grupos o round robin -->
+    <TournamentBracketGroups
+      v-if="selectedTournamentId !== null && regularMatches.length > 0 && isGroupFormat && hasGroupMatches"
+      :partidos="regularMatches" />
+    <TournamentBracketRoundRobin
+      v-if="selectedTournamentId !== null && regularMatches.length > 0 && isRoundRobin"
+      :partidos="regularMatches" />
+
+    <!-- Bracket de eliminatoria: siempre que haya partidos con bracketIndex -->
+    <TournamentBracketElimination
+      v-if="selectedTournamentId !== null && eliminationMatches.length > 0"
+      :partidos="eliminationMatches" />
+
+    <!-- Bracket para torneos de eliminación directa pura (sin fase previa) -->
+    <TournamentBracketElimination
+      v-if="selectedTournamentId !== null && partidos.length > 0 && !isGroupFormat && !isRoundRobin"
       :partidos="partidos" />
 
     <FormModal v-model="showRescheduleModal" title="Reprogramar Partido" @submit="rescheduleMatch">
@@ -217,7 +245,30 @@ onMounted(() => {
         <span class="text-xl font-bold pt-6">-</span>
         <label class="block flex-1">
           <span class="text-sm font-medium text-gray-700">Goles Visitante</span>
-          <input type="number" min="0" v-model="resultVisitante" class="mt-2 w-full px-3 py-2 border rounded text-center" />
+          <input type="number" min="0" v-model="resultVisitante"
+            class="mt-2 w-full px-3 py-2 border rounded text-center" />
+        </label>
+      </div>
+    </FormModal>
+
+    <!-- Modal de avanzar a eliminatoria -->
+    <FormModal v-model="showAdvanceModal" title="Avanzar a Eliminatoria"
+      @submit="generateEliminationPhase(selectedTournamentId!, clasificadosInput); showAdvanceModal = false">
+      <div class="space-y-4">
+        <p class="text-sm text-gray-600">
+          <template v-if="isGroupFormat">
+            Selecciona cuántos equipos clasifican de cada grupo.
+          </template>
+          <template v-else>
+            Selecciona el total de equipos que clasifican a la eliminatoria (ej. 4 para semifinales, 8 para cuartos).
+          </template>
+        </p>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">
+            {{ isGroupFormat ? 'Clasificados por grupo' : 'Total de clasificados' }}
+          </span>
+          <input type="number" min="2" v-model.number="clasificadosInput"
+            class="mt-2 w-full px-3 py-2 border rounded text-center" />
         </label>
       </div>
     </FormModal>

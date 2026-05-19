@@ -46,6 +46,9 @@ const hasGroupMatches = computed(() => {
   return partidos.some(p => p.grupo != null)
 })
 
+const eliminationMatches = computed(() => partidos.filter(p => p.bracketIndex != null))
+const regularMatches = computed(() => partidos.filter(p => p.bracketIndex == null))
+
 const groupedStandings = computed(() => {
   const map = new Map<string, typeof standings>()
   standings.forEach((s) => {
@@ -134,7 +137,7 @@ onMounted(() => {
                 </td>
                 <td class="px-6 py-3 text-center">
                   <span class="text-sm font-semibold text-gray-900">{{ partido.golesLocal }} - {{ partido.golesVisitante
-                  }}</span>
+                    }}</span>
                 </td>
                 <td class="px-6 py-3 text-sm text-gray-900">
                   {{ partido.equipoVisitante?.nombre ?? 'TBD' }}
@@ -274,10 +277,23 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- Bracket del torneo -->
-      <TournamentBracketGroups v-if="partidos.length > 0 && isGroupFormat && hasGroupMatches" :partidos="partidos" />
-      <TournamentBracketRoundRobin v-else-if="partidos.length > 0 && isRoundRobin" :partidos="partidos" />
-      <TournamentBracketElimination v-else-if="partidos.length > 0" :partidos="partidos" />
+      <!-- Fase regular: grupos o round robin -->
+      <TournamentBracketGroups
+        v-if="regularMatches.length > 0 && isGroupFormat && hasGroupMatches"
+        :partidos="regularMatches" />
+      <TournamentBracketRoundRobin
+        v-if="regularMatches.length > 0 && isRoundRobin"
+        :partidos="regularMatches" />
+
+      <!-- Bracket de eliminatoria: aparece cuando se genera el avance -->
+      <TournamentBracketElimination
+        v-if="eliminationMatches.length > 0"
+        :partidos="eliminationMatches" />
+
+      <!-- Bracket puro de eliminación directa (sin fase previa de grupos/RR) -->
+      <TournamentBracketElimination
+        v-if="partidos.length > 0 && !isGroupFormat && !isRoundRobin"
+        :partidos="partidos" />
     </main>
   </div>
 </template>
