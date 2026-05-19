@@ -22,7 +22,7 @@ function handleLogout() {
       <div class="flex items-center gap-6">
         <router-link to="/" class="text-lg font-semibold text-gray-900 hover:text-gray-700 transition-colors">Sports Tournament Manager</router-link>
         <div v-if="auth.isAuthenticated" class="flex gap-4">
-          <router-link v-if="isAdmin" to="/panel"
+          <router-link to="/panel"
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Panel
           </router-link>
