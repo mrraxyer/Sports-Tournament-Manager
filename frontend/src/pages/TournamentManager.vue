@@ -97,9 +97,7 @@ const formatDate = (date: string) => {
 
 onMounted(() => {
   auth.hydrateSession()
-  if (isAdmin.value) {
-    fetchTournaments()
-  }
+  fetchTournaments()
 })
 </script>
 
@@ -180,6 +178,7 @@ onMounted(() => {
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tipo de Formato</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fecha de Inicio</th>
+                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Partidos</th>
               </tr>
             </thead>
             <tbody>
@@ -189,6 +188,12 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-900">{{ tournament.nombre }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.tipoFormato }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
+                <td class="px-6 py-3 text-center">
+                  <router-link
+                    :to="`/tournaments/${tournament.torneosId}/matches`"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  >Ver partidos</router-link>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -196,13 +201,46 @@ onMounted(() => {
       </section>
     </main>
 
-    <!-- Non-Admin Message -->
-    <main v-else class="max-w-2xl mx-auto px-6 py-8">
-      <section class="bg-white border border-gray-300 rounded-lg p-6">
-        <div class="text-center py-8">
-          <h2 class="text-xl font-semibold text-gray-900 mb-2">Acceso Denegado</h2>
-          <p class="text-gray-600">Esta sección es solo para administradores. Tu rol actual es: <strong>{{
-            auth.session?.usuario.rol || 'Sin rol' }}</strong></p>
+    <!-- Non-Admin: read-only tournament list -->
+    <main v-else class="max-w-6xl mx-auto px-6 py-8">
+      <section class="bg-white border border-gray-300 rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-300 bg-gray-50">
+          <h3 class="text-xl font-semibold text-gray-900">Torneos</h3>
+        </div>
+
+        <div v-if="loading.fetch" class="px-6 py-8 text-center text-gray-600">
+          Cargando torneos…
+        </div>
+
+        <div v-else-if="tournaments.length === 0" class="px-6 py-8 text-center text-gray-600">
+          No hay torneos disponibles
+        </div>
+
+        <div v-else class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-300">
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tipo de Formato</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fecha de Inicio</th>
+                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Partidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="tournament in tournaments" :key="tournament.torneosId"
+                class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-3 text-sm text-gray-900">{{ tournament.nombre }}</td>
+                <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.tipoFormato }}</td>
+                <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
+                <td class="px-6 py-3 text-center">
+                  <router-link
+                    :to="`/tournaments/${tournament.torneosId}/matches`"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                  >Ver partidos</router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </main>

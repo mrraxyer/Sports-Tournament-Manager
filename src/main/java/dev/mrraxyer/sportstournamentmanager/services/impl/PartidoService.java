@@ -2,6 +2,7 @@ package dev.mrraxyer.sportstournamentmanager.services.impl;
 
 import dev.mrraxyer.sportstournamentmanager.events.PartidoResultadoEvent;
 import dev.mrraxyer.sportstournamentmanager.models.Partido;
+import dev.mrraxyer.sportstournamentmanager.models.Torneo;
 import dev.mrraxyer.sportstournamentmanager.repositories.BaseRepository;
 import dev.mrraxyer.sportstournamentmanager.repositories.PartidoRepository;
 import dev.mrraxyer.sportstournamentmanager.services.BaseService;
@@ -72,9 +73,8 @@ public class PartidoService extends BaseService<Partido, Integer> {
      * @param torneo el torneo
      * @return lista de partidos del torneo
      */
-    public List<Partido> findByTorneo(Object torneo) {
-        // Este método se implementaría si fuera necesario
-        return null;
+    public List<Partido> findByTorneo(Torneo torneo) {
+        return partidoRepository.findByTorneo(torneo);
     }
 }
 

@@ -3,6 +3,8 @@ package dev.mrraxyer.sportstournamentmanager.controllers;
 import dev.mrraxyer.sportstournamentmanager.dto.ApiResponse;
 import dev.mrraxyer.sportstournamentmanager.dto.ApiResponseBuilder;
 import dev.mrraxyer.sportstournamentmanager.models.Partido;
+import dev.mrraxyer.sportstournamentmanager.models.Torneo;
+import dev.mrraxyer.sportstournamentmanager.repositories.TorneoRepository;
 import dev.mrraxyer.sportstournamentmanager.services.impl.PartidoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,9 @@ public class PartidoController {
 
     @Autowired
     private PartidoService partidoService;
+
+    @Autowired
+    private TorneoRepository torneoRepository;
 
     /**
      * Obtiene un partido por ID
@@ -58,6 +63,33 @@ public class PartidoController {
             .success(partidos)
             .message("Total de partidos: " + partidos.size())
             .path("/api/partidos")
+            .build();
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Obtiene todos los partidos de un torneo
+     */
+    @GetMapping("/torneo/{torneoId}")
+    public ResponseEntity<ApiResponse<List<Partido>>> listarPartidosPorTorneo(
+            @PathVariable Integer torneoId) {
+
+        Optional<Torneo> torneoOpt = torneoRepository.findById(torneoId);
+
+        if (!torneoOpt.isPresent()) {
+            ApiResponse<List<Partido>> response = ApiResponseBuilder
+                .<List<Partido>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
+                .path("/api/partidos/torneo/" + torneoId)
+                .build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        List<Partido> partidos = partidoService.findByTorneo(torneoOpt.get());
+
+        ApiResponse<List<Partido>> response = ApiResponseBuilder
+            .success(partidos)
+            .message("Partidos del torneo: " + partidos.size())
+            .path("/api/partidos/torneo/" + torneoId)
             .build();
         return ResponseEntity.ok(response);
     }
