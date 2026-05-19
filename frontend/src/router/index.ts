@@ -39,6 +39,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/admin/users',
+    name: 'AdminUserManager',
+    component: () => import('../pages/AdminUserManagerPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/capitan/jugadores',
+    name: 'CaptainPlayerManager',
+    component: () => import('../pages/CaptainPlayerManagerPage.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     name: 'Home',
     component: () => import('../pages/HomePage.vue'),

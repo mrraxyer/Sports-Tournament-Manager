@@ -77,21 +77,6 @@ onMounted(() => {
           <h1 class="text-2xl font-semibold text-gray-900">Torneos</h1>
           <p class="text-sm text-gray-500 mt-0.5">Consulta los resultados y brackets de cada torneo</p>
         </div>
-
-        <div class="flex items-center gap-3">
-          <template v-if="!auth.isAuthenticated">
-            <button @click="router.push('/login')"
-              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded hover:bg-blue-700 transition-colors">
-              Iniciar sesión
-            </button>
-          </template>
-          <template v-else>
-            <button @click="router.push('/dashboard')"
-              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
-              Panel de administración
-            </button>
-          </template>
-        </div>
       </div>
 
       <!-- Filters -->
@@ -104,9 +89,7 @@ onMounted(() => {
             { key: 'todos', label: 'Todos' },
             { key: 'ACTIVO', label: 'Activos' },
             { key: 'FINALIZADO', label: 'Finalizados' },
-          ]" :key="opt.key"
-            @click="filterEstado = opt.key as typeof filterEstado"
-            class="px-3 py-2 transition-colors"
+          ]" :key="opt.key" @click="filterEstado = opt.key as typeof filterEstado" class="px-3 py-2 transition-colors"
             :class="filterEstado === opt.key
               ? 'bg-blue-600 text-white border-blue-600'
               : 'bg-white text-gray-600 hover:bg-gray-50'">

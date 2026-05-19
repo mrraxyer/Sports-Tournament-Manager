@@ -8,7 +8,7 @@ const router = useRouter()
 
 const userDisplayName = computed(() => auth.session?.usuario.nombre || 'Usuario')
 const userEmail = computed(() => auth.session?.usuario.correo || '')
-const isAdmin = computed(() => auth.session?.usuario.rol === 'ADMIN')
+const isAdmin = computed(() => auth.session?.usuario.rol?.toUpperCase() === 'ADMIN')
 
 function handleLogout() {
   auth.logout()
@@ -22,7 +22,8 @@ function handleLogout() {
       <div class="flex items-center gap-6">
         <h1 class="text-lg font-semibold text-gray-900">Sports Tournament Manager</h1>
         <div v-if="auth.isAuthenticated" class="flex gap-4">
-          <router-link v-if="isAdmin" to="/dashboard" class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+          <router-link v-if="isAdmin" to="/dashboard"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Dashboard
           </router-link>
           <router-link to="/tournaments"
@@ -37,17 +38,33 @@ function handleLogout() {
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Partidos
           </router-link>
+          <router-link v-if="isAdmin" to="/admin/users"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Usuarios
+          </router-link>
+          <router-link v-if="!isAdmin" to="/capitan/jugadores"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Mis Jugadores
+          </router-link>
         </div>
       </div>
       <div class="flex items-center gap-4">
-        <div class="text-right">
-          <p class="text-sm font-medium text-gray-900">{{ userDisplayName }}</p>
-          <p class="text-xs text-gray-600">{{ userEmail }}</p>
-        </div>
-        <button @click="handleLogout"
-          class="px-4 py-2 bg-gray-100 text-gray-900 border border-gray-300 rounded hover:bg-gray-200 font-medium text-sm cursor-pointer">
-          Cerrar sesión
-        </button>
+        <template v-if="auth.isAuthenticated">
+          <div class="text-right">
+            <p class="text-sm font-medium text-gray-900">{{ userDisplayName }}</p>
+            <p class="text-xs text-gray-600">{{ userEmail }}</p>
+          </div>
+          <button @click="handleLogout"
+            class="px-4 py-2 bg-gray-100 text-gray-900 border border-gray-300 rounded hover:bg-gray-200 font-medium text-sm cursor-pointer">
+            Cerrar sesión
+          </button>
+        </template>
+        <template v-else>
+          <button @click="router.push('/login')"
+            class="px-4 py-2 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 font-medium text-sm cursor-pointer transition-colors">
+            Iniciar sesión
+          </button>
+        </template>
       </div>
     </div>
   </nav>
