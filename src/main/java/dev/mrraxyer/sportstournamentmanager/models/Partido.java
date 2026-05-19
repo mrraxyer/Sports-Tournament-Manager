@@ -38,7 +38,10 @@ public class Partido {
 
     @Column(name = "goles_visitante", nullable = false)
     private Integer golesVisitante = 0;
-    
+
+    @Column(name = "jugado", nullable = false, columnDefinition = "boolean default false")
+    private Boolean jugado = false;
+
     @Column(nullable = false, name = "fecha_partido")
     private LocalDateTime fechaPartido;
 }

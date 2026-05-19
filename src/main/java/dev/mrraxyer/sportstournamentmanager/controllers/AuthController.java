@@ -14,6 +14,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 
 import java.util.Optional;
 
@@ -34,10 +36,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
         try {
             Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getContrasena())
-            );
+                    new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getContrasena()));
 
-            Optional<dev.mrraxyer.sportstournamentmanager.models.Usuario> usuarioOpt = usuarioService.findByCorreo(request.getCorreo());
+            Optional<dev.mrraxyer.sportstournamentmanager.models.Usuario> usuarioOpt = usuarioService
+                    .findByCorreo(request.getCorreo());
             if (usuarioOpt.isPresent()) {
                 dev.mrraxyer.sportstournamentmanager.models.Usuario usuario = usuarioOpt.get();
                 AuthTokenService.LoginToken loginToken = authTokenService.createToken(usuario, auth.getAuthorities());
@@ -45,8 +47,7 @@ public class AuthController {
                         loginToken.accessToken(),
                         "Bearer",
                         loginToken.expiresAt(),
-                        loginToken.usuario()
-                );
+                        loginToken.usuario());
 
                 ApiResponse<LoginResponse> response = ApiResponseBuilder
                         .success(responseBody)
@@ -56,7 +57,8 @@ public class AuthController {
                 return ResponseEntity.ok(response);
             } else {
                 ApiResponse<LoginResponse> response = ApiResponseBuilder
-                        .<LoginResponse>error("Usuario no encontrado después de la autenticación", HttpStatus.INTERNAL_SERVER_ERROR.value())
+                        .<LoginResponse>error("Usuario no encontrado después de la autenticación",
+                                HttpStatus.INTERNAL_SERVER_ERROR.value())
                         .path("/api/auth/login")
                         .build();
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -70,5 +72,40 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
-}
 
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(HttpServletRequest request) {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            ApiResponse<LoginResponse> response = ApiResponseBuilder
+                    .<LoginResponse>error("Token inválido o ausente", HttpStatus.UNAUTHORIZED.value())
+                    .path("/api/auth/refresh")
+                    .build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        String token = authorization.substring(7).trim();
+        return authTokenService.refresh(token)
+                .map(loginToken -> {
+                    LoginResponse responseBody = new LoginResponse(
+                            loginToken.accessToken(),
+                            "Bearer",
+                            loginToken.expiresAt(),
+                            loginToken.usuario());
+
+                    ApiResponse<LoginResponse> response = ApiResponseBuilder
+                            .success(responseBody)
+                            .message("Token refrescado")
+                            .path("/api/auth/refresh")
+                            .build();
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    ApiResponse<LoginResponse> response = ApiResponseBuilder
+                            .<LoginResponse>error("Token inválido o expirado", HttpStatus.UNAUTHORIZED.value())
+                            .path("/api/auth/refresh")
+                            .build();
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+                });
+    }
+}

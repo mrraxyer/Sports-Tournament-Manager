@@ -17,7 +17,11 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
 
     @Override
     public List<Partido> generateSchedule(Torneo torneo, List<Equipo> equipos, LocalDate startDate) {
-        return generarPrimeraRonda(torneo, equipos, startDate);
+        List<Partido> partidos = new ArrayList<>();
+        for (List<Partido> ronda : generateGroupedSchedule(torneo, equipos, startDate)) {
+            partidos.addAll(ronda);
+        }
+        return partidos;
     }
 
     @Override
@@ -158,4 +162,3 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
         return equipo;
     }
 }
-

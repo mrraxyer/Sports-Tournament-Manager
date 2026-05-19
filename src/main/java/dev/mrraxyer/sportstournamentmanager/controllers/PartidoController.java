@@ -179,6 +179,7 @@ public class PartidoController {
             Partido partido = partidoOpt.get();
             partido.setGolesLocal(golesLocal);
             partido.setGolesVisitante(golesVisitante);
+            partido.setJugado(true);
 
             Partido partidoGuardado = partidoService.save(partido);
 

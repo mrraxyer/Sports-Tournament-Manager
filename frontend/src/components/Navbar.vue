@@ -33,6 +33,10 @@ function handleLogout() {
             class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
             Equipos
           </router-link>
+          <router-link v-if="isAdmin" to="/admin/matches"
+            class="text-sm text-gray-700 hover:text-gray-900 font-medium transition-colors">
+            Partidos
+          </router-link>
         </div>
       </div>
       <div class="flex items-center gap-4">

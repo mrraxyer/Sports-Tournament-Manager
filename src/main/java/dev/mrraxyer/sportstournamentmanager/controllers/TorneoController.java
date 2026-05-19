@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import dev.mrraxyer.sportstournamentmanager.services.MatchSchedulerService;
+import dev.mrraxyer.sportstournamentmanager.services.impl.PartidoService;
+import dev.mrraxyer.sportstournamentmanager.models.Partido;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +25,12 @@ public class TorneoController {
 
     @Autowired
     private TorneoService torneoService;
+
+    @Autowired
+    private MatchSchedulerService matchSchedulerService;
+
+    @Autowired
+    private PartidoService partidoService;
 
     /**
      * Obtiene un torneo por ID
@@ -149,6 +159,46 @@ public class TorneoController {
             .path("/api/torneos/buscar/formato")
             .build();
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Genera el calendario de partidos para un torneo según su formato configurado.
+     * Retorna 409 Conflict si el torneo ya tiene partidos para evitar duplicados.
+     *
+     * @param id el ID del torneo
+     * @return la lista de partidos generados, o una respuesta de error
+     */
+    @PostMapping("/{id}/generar-calendario")
+    public ResponseEntity<ApiResponse<List<Partido>>> generarCalendario(@PathVariable Integer id) {
+        Optional<Torneo> torneoOpt = torneoService.findById(id);
+
+        if (!torneoOpt.isPresent()) {
+            ApiResponse<List<Partido>> response = ApiResponseBuilder
+                .<List<Partido>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
+                .path("/api/torneos/" + id + "/generar-calendario")
+                .build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        Torneo torneo = torneoOpt.get();
+        List<Partido> existing = partidoService.findByTorneo(torneo);
+
+        if (!existing.isEmpty()) {
+            ApiResponse<List<Partido>> response = ApiResponseBuilder
+                .<List<Partido>>error("Este torneo ya tiene partidos generados", HttpStatus.CONFLICT.value())
+                .path("/api/torneos/" + id + "/generar-calendario")
+                .build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+        List<Partido> partidos = matchSchedulerService.scheduleMatchesUsingTorneoFormat(torneo, LocalDate.now());
+
+        ApiResponse<List<Partido>> response = ApiResponseBuilder
+            .created(partidos)
+            .message("Calendario generado exitosamente: " + partidos.size() + " partidos")
+            .path("/api/torneos/" + id + "/generar-calendario")
+            .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
 

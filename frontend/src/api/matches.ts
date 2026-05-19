@@ -2,12 +2,13 @@ import api from './index'
 
 export interface Partido {
   partidosId: number
-  torneo: { torneosId: number; nombre: string }
+  torneo: { torneosId: number; nombre: string; tipoFormato: string }
   equipoLocal: { equiposId: number; nombre: string }
   equipoVisitante: { equiposId: number; nombre: string }
   golesLocal: number
   golesVisitante: number
   fechaPartido: string
+  jugado: boolean
 }
 
 export interface TablaPosiciones {
@@ -32,6 +33,13 @@ export const matchAPI = {
       { params: { golesLocal, golesVisitante } }
     )
     return response.data.data
+  },
+
+  async generateSchedule(tournamentId: number): Promise<Partido[]> {
+    const response = await api.post<{ data: Partido[] }>(
+      `/torneos/${tournamentId}/generar-calendario`
+    )
+    return response.data.data || []
   },
 }
 

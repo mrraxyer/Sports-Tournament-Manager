@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useMatches } from '../composables/useMatches'
 import Navbar from '../components/Navbar.vue'
+import TournamentBracketRoundRobin from '../components/TournamentBracketRoundRobin.vue'
+import TournamentBracketElimination from '../components/TournamentBracketElimination.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,6 +27,12 @@ const {
 const tournamentName = computed(() =>
   partidos.length > 0 ? partidos[0].torneo.nombre : `Torneo ${torneoId.value}`
 )
+
+/** Verdadero cuando el torneo es de formato round-robin o liga. */
+const isRoundRobin = computed(() => {
+  const fmt = (partidos[0]?.torneo?.tipoFormato ?? '').toLowerCase()
+  return fmt.includes('round') || fmt.includes('liga') || fmt.includes('robin')
+})
 
 const formatDate = (date: string) => {
   if (!date) return '-'
@@ -175,6 +183,16 @@ onMounted(() => {
           </table>
         </div>
       </section>
+
+      <!-- Bracket del torneo -->
+      <TournamentBracketRoundRobin
+        v-if="partidos.length > 0 && isRoundRobin"
+        :partidos="partidos"
+      />
+      <TournamentBracketElimination
+        v-else-if="partidos.length > 0"
+        :partidos="partidos"
+      />
     </main>
   </div>
 </template>
