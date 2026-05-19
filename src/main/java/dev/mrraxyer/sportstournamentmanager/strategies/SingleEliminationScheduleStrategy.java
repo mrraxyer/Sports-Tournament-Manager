@@ -102,46 +102,6 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
         return bracket;
     }
 
-    private List<Partido> generarPrimeraRonda(Torneo torneo, List<Equipo> equipos, LocalDate startDate) {
-        if (equipos == null || equipos.size() < 2) {
-            return Collections.emptyList();
-        }
-
-        List<Equipo> participantes = new ArrayList<>(equipos);
-        int bracketSize = nextPowerOfTwo(participantes.size());
-        while (participantes.size() < bracketSize) {
-            participantes.add(null);
-        }
-
-        List<Integer> order = generateSeedingOrder(bracketSize);
-        List<Equipo> ordered = new ArrayList<>(bracketSize);
-        for (Integer seed : order) {
-            ordered.add(participantes.get(seed - 1));
-        }
-
-        List<Partido> firstRound = new ArrayList<>();
-        LocalDateTime roundStart = startDate.atTime(10, 0);
-        int matchNumber = 1;
-
-        for (int i = 0; i < ordered.size(); i += 2) {
-            Equipo local = ordered.get(i);
-            Equipo visitante = ordered.get(i + 1);
-            if (local == null || visitante == null) {
-                continue;
-            }
-
-            Partido partido = new Partido();
-            partido.setTorneo(torneo);
-            partido.setEquipoLocal(local);
-            partido.setEquipoVisitante(visitante);
-            partido.setFechaPartido(roundStart.plusHours((matchNumber - 1L) * 2L));
-            firstRound.add(partido);
-            matchNumber++;
-        }
-
-        return firstRound;
-    }
-
     private int nextPowerOfTwo(int value) {
         int power = 1;
         while (power < value) {
@@ -168,10 +128,4 @@ public class SingleEliminationScheduleStrategy implements MatchScheduleStrategy 
         return order;
     }
 
-    private Equipo crearGanadorSintetico(int roundNumber, int matchNumber) {
-        Equipo equipo = new Equipo();
-        equipo.setEquiposId(-1 * (roundNumber * 1000 + matchNumber));
-        equipo.setNombre("TBD");
-        return equipo;
-    }
 }

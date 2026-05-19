@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 /** Orquestador de generación de calendarios usando el patrón Strategy. */
@@ -103,15 +102,4 @@ public class MatchSchedulerService {
         return partidos;
     }
 
-    public List<List<Partido>> buildGroupedScheduleUsingTorneoFormat(Torneo torneo, LocalDate startDate) {
-        List<Equipo> equipos = equipoRepository.findByTorneo(torneo);
-        MatchScheduleStrategy strategy;
-        String tipo = torneo.getTipoFormato() == null ? "" : torneo.getTipoFormato().toLowerCase();
-        if (tipo.contains("liga") || tipo.contains("round") || tipo.contains("round-robin")) {
-            strategy = new RoundRobinScheduleStrategy();
-        } else {
-            strategy = new SingleEliminationScheduleStrategy();
-        }
-        return new ArrayList<>(buildGroupedSchedule(torneo, equipos, strategy, startDate));
-    }
 }
