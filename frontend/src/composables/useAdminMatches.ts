@@ -29,6 +29,10 @@ export function useAdminMatches() {
   /** Indicadores de carga para las operaciones asíncronas. */
   const loading = reactive({ fetch: false, generate: false })
 
+  const showRescheduleModal = ref(false)
+  const rescheduleMatchId = ref<number | null>(null)
+  const rescheduleDate = ref<string>('')
+
   /** ID del partido cuyo resultado se está guardando. Null si no hay guardado en curso. */
   const savingId = ref<number | null>(null)
 
@@ -146,6 +150,53 @@ export function useAdminMatches() {
     }
   }
 
+  async function openRescheduleModal(matchId: number, fechaIso: string) {
+    rescheduleMatchId.value = matchId
+    // convertir ISO a valor aceptado por input[type=datetime-local]
+    const dt = new Date(fechaIso)
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
+    rescheduleDate.value = local.toISOString().slice(0, 16)
+    showRescheduleModal.value = true
+  }
+
+  async function rescheduleMatch() {
+    if (!rescheduleMatchId.value || selectedTournamentId.value === null) return
+    loading.fetch = true
+    try {
+      await matchAPI.reschedule(rescheduleMatchId.value, new Date(rescheduleDate.value).toISOString())
+      showRescheduleModal.value = false
+      await fetchTournamentMatches(selectedTournamentId.value)
+    } catch (error) {
+      feedback.type = 'error'
+      feedback.message = error instanceof Error ? error.message : 'Error al reprogramar partido'
+    } finally {
+      loading.fetch = false
+    }
+  }
+
+  /**
+   * Elimina un partido por ID después de confirmación del usuario.
+   * @param matchId ID del partido a eliminar
+   */
+  async function deleteMatch(matchId: number) {
+    if (!confirm('¿Confirmas eliminar este partido? Esta acción no puede revertirse.')) return
+    if (selectedTournamentId.value === null) return
+    loading.fetch = true
+    feedback.type = ''
+    feedback.message = ''
+    try {
+      await matchAPI.delete(matchId)
+      feedback.type = 'success'
+      feedback.message = 'Partido eliminado exitosamente'
+      await fetchTournamentMatches(selectedTournamentId.value)
+    } catch (error) {
+      feedback.type = 'error'
+      feedback.message = error instanceof Error ? error.message : 'Error al eliminar partido'
+    } finally {
+      loading.fetch = false
+    }
+  }
+
   return {
     tournaments,
     selectedTournamentId,
@@ -158,5 +209,10 @@ export function useAdminMatches() {
     fetchTournamentMatches,
     generateTournamentSchedule,
     saveMatchScore,
+    showRescheduleModal,
+    rescheduleDate,
+    openRescheduleModal,
+    rescheduleMatch,
+    deleteMatch,
   }
 }

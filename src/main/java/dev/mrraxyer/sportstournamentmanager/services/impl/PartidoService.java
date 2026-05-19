@@ -15,8 +15,10 @@ import java.util.List;
 /**
  * Servicio de Partido
  *
- * Extiende BaseService<Partido, Integer> para herdar todas las operaciones CRUD genéricas.
- * Adiciona funcionalidad de publicación de eventos cuando se registra o actualiza
+ * Extiende BaseService<Partido, Integer> para herdar todas las operaciones CRUD
+ * genéricas.
+ * Adiciona funcionalidad de publicación de eventos cuando se registra o
+ * actualiza
  * el resultado de un partido, habilitando patrones reactivos.
  */
 @Service
@@ -44,21 +46,22 @@ public class PartidoService extends BaseService<Partido, Integer> {
     public Partido save(Partido partido) {
         Partido partidoGuardado = super.save(partido);
 
-        // Publicar evento cuando se guarden/actualicen los resultados
-        // Solo publica si el partido tiene ambos equipos y es del mismo torneo
-        if (partidoGuardado.getEquipoLocal() != null &&
-            partidoGuardado.getEquipoVisitante() != null &&
-            partidoGuardado.getTorneo() != null) {
+        // Publicar evento sólo cuando el partido haya sido marcado como jugado
+        // y tenga ambos equipos y torneo definido. Además incluye el campo grupo.
+        if (Boolean.TRUE.equals(partidoGuardado.getJugado())
+                && partidoGuardado.getEquipoLocal() != null
+                && partidoGuardado.getEquipoVisitante() != null
+                && partidoGuardado.getTorneo() != null) {
 
             PartidoResultadoEvent evento = new PartidoResultadoEvent(
-                this,
-                partidoGuardado.getPartidosId(),
-                partidoGuardado.getTorneo().getTorneosId(),
-                partidoGuardado.getEquipoLocal().getEquiposId(),
-                partidoGuardado.getEquipoVisitante().getEquiposId(),
-                partidoGuardado.getGolesLocal(),
-                partidoGuardado.getGolesVisitante()
-            );
+                    this,
+                    partidoGuardado.getPartidosId(),
+                    partidoGuardado.getTorneo().getTorneosId(),
+                    partidoGuardado.getEquipoLocal().getEquiposId(),
+                    partidoGuardado.getEquipoVisitante().getEquiposId(),
+                    partidoGuardado.getGolesLocal(),
+                    partidoGuardado.getGolesVisitante(),
+                    partidoGuardado.getGrupo());
 
             eventPublisher.publishEvent(evento);
         }
@@ -77,4 +80,3 @@ public class PartidoService extends BaseService<Partido, Integer> {
         return partidoRepository.findByTorneo(torneo);
     }
 }
-

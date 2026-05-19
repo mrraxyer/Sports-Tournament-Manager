@@ -6,8 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Entidad TablaPosiciones: Rastrea las métricas de rendimiento de los equipos dentro de un torneo específico.
- * Contiene estadísticas como partidos jugados, puntos, goles a favor y en contra.
+ * Entidad TablaPosiciones: Rastrea las métricas de rendimiento de los equipos
+ * dentro de un torneo específico.
+ * Contiene estadísticas como partidos jugados, puntos, goles a favor y en
+ * contra.
  */
 @Entity
 @Table(name = "tabla_posiciones")
@@ -39,5 +41,16 @@ public class TablaPosiciones {
 
     @Column(name = "goles_en_contra", nullable = false)
     private Integer golesEnContra = 0;
-}
 
+    @Column(name = "grupo")
+    private String grupo;
+
+    @Column(name = "victorias", nullable = false)
+    private Integer victorias = 0;
+
+    @Column(name = "empates", nullable = false)
+    private Integer empates = 0;
+
+    @Column(name = "derrotas", nullable = false)
+    private Integer derrotas = 0;
+}

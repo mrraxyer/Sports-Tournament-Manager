@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth'
 import { useAdminMatches } from '../composables/useAdminMatches'
 import TournamentBracketRoundRobin from './TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from './TournamentBracketElimination.vue'
+import FormModal from './modals/FormModal.vue'
 
 const auth = useAuthStore()
 
@@ -31,6 +32,11 @@ const {
   fetchTournamentMatches,
   generateTournamentSchedule,
   saveMatchScore,
+  showRescheduleModal,
+  rescheduleDate,
+  openRescheduleModal,
+  rescheduleMatch,
+  deleteMatch,
 } = useAdminMatches()
 
 /**
@@ -64,10 +70,8 @@ onMounted(() => {
       <div class="flex flex-wrap items-end gap-4">
         <label class="block space-y-1.5 flex-1 min-w-48">
           <span class="text-sm font-medium text-gray-700">Torneo</span>
-          <select
-            v-model="selectedTournamentId"
-            class="w-full px-3 py-2.5 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1"
-          >
+          <select v-model="selectedTournamentId"
+            class="w-full px-3 py-2.5 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1">
             <option :value="null" disabled>Selecciona un torneo</option>
             <option v-for="t in tournaments" :key="t.torneosId" :value="t.torneosId">
               {{ t.nombre }}
@@ -75,12 +79,9 @@ onMounted(() => {
           </select>
         </label>
 
-        <button
-          type="button"
-          :disabled="selectedTournamentId === null || loading.generate"
+        <button type="button" :disabled="selectedTournamentId === null || loading.generate"
           @click="generateTournamentSchedule(selectedTournamentId!)"
-          class="px-4 py-2.5 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 disabled:opacity-60 font-medium text-sm cursor-pointer"
-        >
+          class="px-4 py-2.5 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 disabled:opacity-60 font-medium text-sm cursor-pointer">
           <span v-if="loading.generate">Generando…</span>
           <span v-else>Generar Calendario</span>
         </button>
@@ -88,22 +89,15 @@ onMounted(() => {
     </section>
 
     <!-- Alerta de retroalimentación -->
-    <div
-      v-if="feedback.message"
-      :class="{
-        'bg-green-50 border-green-300 text-green-700': feedback.type === 'success',
-        'bg-red-50 border-red-300 text-red-700': feedback.type === 'error',
-      }"
-      class="px-4 py-3 rounded border text-sm"
-    >
+    <div v-if="feedback.message" :class="{
+      'bg-green-50 border-green-300 text-green-700': feedback.type === 'success',
+      'bg-red-50 border-red-300 text-red-700': feedback.type === 'error',
+    }" class="px-4 py-3 rounded border text-sm">
       {{ feedback.message }}
     </div>
 
     <!-- Lista de partidos -->
-    <section
-      v-if="selectedTournamentId !== null"
-      class="bg-white border border-gray-300 rounded overflow-hidden"
-    >
+    <section v-if="selectedTournamentId !== null" class="bg-white border border-gray-300 rounded overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-300 bg-gray-50">
         <h2 class="text-xl font-semibold text-gray-900">Partidos</h2>
       </div>
@@ -129,12 +123,8 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="partido in partidos"
-              :key="partido.partidosId"
-              class="border-b border-gray-200 transition-colors"
-              :class="partido.jugado ? 'bg-green-50' : 'hover:bg-gray-50'"
-            >
+            <tr v-for="partido in partidos" :key="partido.partidosId" class="border-b border-gray-200 transition-colors"
+              :class="partido.jugado ? 'bg-green-50' : 'hover:bg-gray-50'">
               <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(partido.fechaPartido) }}</td>
               <td class="px-6 py-3 text-sm font-medium text-gray-900">
                 {{ partido.equipoLocal.nombre }}
@@ -145,60 +135,51 @@ onMounted(() => {
 
               <!-- Goles Local -->
               <td class="px-6 py-3 text-center">
-                <span
-                  v-if="partido.jugado"
-                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800"
-                >
+                <span v-if="partido.jugado"
+                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800">
                   {{ partido.golesLocal }}
                 </span>
-                <input
-                  v-else-if="draftScores[partido.partidosId]"
-                  v-model.number="draftScores[partido.partidosId].golesLocal"
-                  type="number"
-                  min="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1"
-                />
+                <input v-else-if="draftScores[partido.partidosId]"
+                  v-model.number="draftScores[partido.partidosId].golesLocal" type="number" min="0"
+                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
               </td>
 
               <!-- Goles Visitante -->
               <td class="px-6 py-3 text-center">
-                <span
-                  v-if="partido.jugado"
-                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800"
-                >
+                <span v-if="partido.jugado"
+                  class="inline-block w-16 px-2 py-1 bg-green-100 border border-green-200 rounded text-center text-sm font-semibold text-green-800">
                   {{ partido.golesVisitante }}
                 </span>
-                <input
-                  v-else-if="draftScores[partido.partidosId]"
-                  v-model.number="draftScores[partido.partidosId].golesVisitante"
-                  type="number"
-                  min="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1"
-                />
+                <input v-else-if="draftScores[partido.partidosId]"
+                  v-model.number="draftScores[partido.partidosId].golesVisitante" type="number" min="0"
+                  class="w-16 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
               </td>
 
               <!-- Acción -->
               <td class="px-6 py-3 text-center">
-                <span
-                  v-if="partido.jugado"
-                  class="text-sm font-medium text-green-600"
-                >
+                <span v-if="partido.jugado" class="text-sm font-medium text-green-600">
                   ✓ Guardado
                 </span>
-                <button
-                  v-else
-                  type="button"
-                  :disabled="savingId === partido.partidosId"
-                  @click="draftScores[partido.partidosId] && saveMatchScore(
+                <div v-else class="flex gap-2 justify-center">
+                  <button type="button" :disabled="savingId === partido.partidosId" @click="draftScores[partido.partidosId] && saveMatchScore(
                     partido.partidosId,
                     draftScores[partido.partidosId].golesLocal,
                     draftScores[partido.partidosId].golesVisitante
                   )"
-                  class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-60 cursor-pointer transition"
-                >
-                  <span v-if="savingId === partido.partidosId">Guardando…</span>
-                  <span v-else>Guardar</span>
-                </button>
+                    class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-60 cursor-pointer transition">
+                    <span v-if="savingId === partido.partidosId">Guardando…</span>
+                    <span v-else>Guardar</span>
+                  </button>
+
+                  <button type="button" @click="openRescheduleModal(partido.partidosId, partido.fechaPartido)"
+                    class="px-3 py-1.5 bg-amber-500 text-white text-sm font-medium rounded hover:bg-amber-600 cursor-pointer">
+                    Reprogramar
+                  </button>
+                  <button type="button" @click="deleteMatch(partido.partidosId)"
+                    class="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 cursor-pointer">
+                    Eliminar
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -207,15 +188,19 @@ onMounted(() => {
     </section>
 
     <!-- Bracket del torneo seleccionado -->
-    <TournamentBracketRoundRobin
-      v-if="selectedTournamentId !== null && partidos.length > 0 && isRoundRobin"
-      :partidos="partidos"
-    />
-    <TournamentBracketElimination
-      v-else-if="selectedTournamentId !== null && partidos.length > 0"
-      :partidos="partidos"
-    />
+    <TournamentBracketRoundRobin v-if="selectedTournamentId !== null && partidos.length > 0 && isRoundRobin"
+      :partidos="partidos" />
+    <TournamentBracketElimination v-else-if="selectedTournamentId !== null && partidos.length > 0"
+      :partidos="partidos" />
 
+    <FormModal v-model="showRescheduleModal" title="Reprogramar Partido" @submit="rescheduleMatch">
+      <div class="space-y-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Nueva fecha y hora</span>
+          <input type="datetime-local" v-model="rescheduleDate" class="mt-2 w-full px-3 py-2 border rounded" />
+        </label>
+      </div>
+    </FormModal>
   </div>
 
   <!-- Restricción para no administradores -->

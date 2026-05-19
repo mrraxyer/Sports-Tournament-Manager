@@ -38,16 +38,16 @@ public class PartidoController {
 
         if (partido.isPresent()) {
             ApiResponse<Partido> response = ApiResponseBuilder
-                .success(partido.get())
-                .message("Partido encontrado")
-                .path("/api/partidos/" + id)
-                .build();
+                    .success(partido.get())
+                    .message("Partido encontrado")
+                    .path("/api/partidos/" + id)
+                    .build();
             return ResponseEntity.ok(response);
         } else {
             ApiResponse<Partido> response = ApiResponseBuilder
-                .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
-                .path("/api/partidos/" + id)
-                .build();
+                    .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
+                    .path("/api/partidos/" + id)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
@@ -60,10 +60,10 @@ public class PartidoController {
         List<Partido> partidos = partidoService.findAll();
 
         ApiResponse<List<Partido>> response = ApiResponseBuilder
-            .success(partidos)
-            .message("Total de partidos: " + partidos.size())
-            .path("/api/partidos")
-            .build();
+                .success(partidos)
+                .message("Total de partidos: " + partidos.size())
+                .path("/api/partidos")
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -78,19 +78,19 @@ public class PartidoController {
 
         if (!torneoOpt.isPresent()) {
             ApiResponse<List<Partido>> response = ApiResponseBuilder
-                .<List<Partido>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
-                .path("/api/partidos/torneo/" + torneoId)
-                .build();
+                    .<List<Partido>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
+                    .path("/api/partidos/torneo/" + torneoId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         List<Partido> partidos = partidoService.findByTorneo(torneoOpt.get());
 
         ApiResponse<List<Partido>> response = ApiResponseBuilder
-            .success(partidos)
-            .message("Partidos del torneo: " + partidos.size())
-            .path("/api/partidos/torneo/" + torneoId)
-            .build();
+                .success(partidos)
+                .message("Partidos del torneo: " + partidos.size())
+                .path("/api/partidos/torneo/" + torneoId)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -111,10 +111,10 @@ public class PartidoController {
         Partido partidoGuardado = partidoService.save(partido);
 
         ApiResponse<Partido> response = ApiResponseBuilder
-            .created(partidoGuardado)
-            .message("Partido creado exitosamente - Se publicó evento de actualización de estadísticas")
-            .path("/api/partidos")
-            .build();
+                .created(partidoGuardado)
+                .message("Partido creado exitosamente - Se publicó evento de actualización de estadísticas")
+                .path("/api/partidos")
+                .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -147,24 +147,25 @@ public class PartidoController {
             Partido partidoGuardado = partidoService.save(partido);
 
             ApiResponse<Partido> response = ApiResponseBuilder
-                .success(partidoGuardado)
-                .message("Partido actualizado exitosamente - Evento de actualización de estadísticas publicado")
-                .path("/api/partidos/" + id)
-                .build();
+                    .success(partidoGuardado)
+                    .message("Partido actualizado exitosamente - Evento de actualización de estadísticas publicado")
+                    .path("/api/partidos/" + id)
+                    .build();
             return ResponseEntity.ok(response);
         } else {
             ApiResponse<Partido> response = ApiResponseBuilder
-                .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
-                .path("/api/partidos/" + id)
-                .build();
+                    .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
+                    .path("/api/partidos/" + id)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 
     /**
      * Registra el resultado de un partido (endpoint específico para resultados)
-     * @param id ID del partido
-     * @param golesLocal goles del equipo local
+     * 
+     * @param id             ID del partido
+     * @param golesLocal     goles del equipo local
      * @param golesVisitante goles del equipo visitante
      */
     @PutMapping("/{id}/resultado")
@@ -177,6 +178,15 @@ public class PartidoController {
 
         if (partidoOpt.isPresent()) {
             Partido partido = partidoOpt.get();
+            // Guard: solo permitir registrar resultado si el torneo está ACTIVO
+            if (partido.getTorneo() == null || !"ACTIVO".equalsIgnoreCase(partido.getTorneo().getEstado())) {
+                ApiResponse<Partido> response = ApiResponseBuilder
+                        .<Partido>error("No se puede registrar resultado: el torneo no está en estado ACTIVO",
+                                HttpStatus.CONFLICT.value())
+                        .path("/api/partidos/" + id + "/resultado")
+                        .build();
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
             partido.setGolesLocal(golesLocal);
             partido.setGolesVisitante(golesVisitante);
             partido.setJugado(true);
@@ -184,16 +194,16 @@ public class PartidoController {
             Partido partidoGuardado = partidoService.save(partido);
 
             ApiResponse<Partido> response = ApiResponseBuilder
-                .success(partidoGuardado)
-                .message("Resultado registrado exitosamente - Tabla de posiciones actualizada automáticamente")
-                .path("/api/partidos/" + id + "/resultado")
-                .build();
+                    .success(partidoGuardado)
+                    .message("Resultado registrado exitosamente - Tabla de posiciones actualizada automáticamente")
+                    .path("/api/partidos/" + id + "/resultado")
+                    .build();
             return ResponseEntity.ok(response);
         } else {
             ApiResponse<Partido> response = ApiResponseBuilder
-                .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
-                .path("/api/partidos/" + id + "/resultado")
-                .build();
+                    .<Partido>error("Partido no encontrado", HttpStatus.NOT_FOUND.value())
+                    .path("/api/partidos/" + id + "/resultado")
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
@@ -211,4 +221,3 @@ public class PartidoController {
         }
     }
 }
-

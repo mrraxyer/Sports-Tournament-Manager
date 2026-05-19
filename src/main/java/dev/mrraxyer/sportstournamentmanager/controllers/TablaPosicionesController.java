@@ -29,6 +29,9 @@ public class TablaPosicionesController {
     @Autowired
     private TorneoRepository torneoRepository;
 
+    @Autowired
+    private dev.mrraxyer.sportstournamentmanager.repositories.PartidoRepository partidoRepository;
+
     /**
      * Obtiene la tabla de posiciones de un torneo específico
      * Ordenada por puntos (descendente) y diferencia de goles
@@ -43,33 +46,81 @@ public class TablaPosicionesController {
 
         if (!torneoOpt.isPresent()) {
             ApiResponse<List<TablaPosiciones>> response = ApiResponseBuilder
-                .<List<TablaPosiciones>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
-                .path("/api/tabla-posiciones/torneo/" + torneoId)
-                .build();
+                    .<List<TablaPosiciones>>error("Torneo no encontrado", HttpStatus.NOT_FOUND.value())
+                    .path("/api/tabla-posiciones/torneo/" + torneoId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         Torneo torneo = torneoOpt.get();
         List<TablaPosiciones> posiciones = tablaPosicionesService.findAll().stream()
-            .filter(tp -> tp.getTorneo().getTorneosId().equals(torneoId))
-            .sorted((a, b) -> {
-                // Ordenar por puntos descendente
-                int puntosComparison = Integer.compare(b.getPuntos(), a.getPuntos());
-                if (puntosComparison != 0) {
-                    return puntosComparison;
-                }
-                // Si puntos iguales, ordenar por diferencia de goles descendente
-                int difA = a.getGolesAFavor() - a.getGolesEnContra();
-                int difB = b.getGolesAFavor() - b.getGolesEnContra();
-                return Integer.compare(difB, difA);
-            })
-            .toList();
+                .filter(tp -> tp.getTorneo().getTorneosId().equals(torneoId))
+                .sorted((a, b) -> {
+                    // 1) puntos DESC
+                    int cmp = Integer.compare(b.getPuntos(), a.getPuntos());
+                    if (cmp != 0)
+                        return cmp;
+
+                    // 2) diferencia de goles DESC
+                    int difA = a.getGolesAFavor() - a.getGolesEnContra();
+                    int difB = b.getGolesAFavor() - b.getGolesEnContra();
+                    if (difA != difB)
+                        return Integer.compare(difB, difA);
+
+                    // 3) enfrentamiento directo (head-to-head)
+                    try {
+                        Torneo torneoA = a.getTorneo();
+                        List<dev.mrraxyer.sportstournamentmanager.models.Partido> h2h = partidoRepository
+                                .findHeadToHead(torneoA, a.getEquipo(), b.getEquipo());
+
+                        int puntosA = 0, puntosB = 0;
+                        int golesA = 0, golesB = 0;
+                        for (dev.mrraxyer.sportstournamentmanager.models.Partido p : h2h) {
+                            if (p.getEquipoLocal().getEquiposId().equals(a.getEquipo().getEquiposId())) {
+                                int gA = p.getGolesLocal();
+                                int gB = p.getGolesVisitante();
+                                golesA += gA;
+                                golesB += gB;
+                                if (gA > gB)
+                                    puntosA += 3;
+                                else if (gA == gB) {
+                                    puntosA += 1;
+                                    puntosB += 1;
+                                } else
+                                    puntosB += 3;
+                            } else {
+                                int gA = p.getGolesVisitante();
+                                int gB = p.getGolesLocal();
+                                golesA += gA;
+                                golesB += gB;
+                                if (gA > gB)
+                                    puntosA += 3;
+                                else if (gA == gB) {
+                                    puntosA += 1;
+                                    puntosB += 1;
+                                } else
+                                    puntosB += 3;
+                            }
+                        }
+
+                        if (puntosA != puntosB)
+                            return Integer.compare(puntosB, puntosA);
+                        if (golesA != golesB)
+                            return Integer.compare(golesB, golesA);
+                    } catch (Exception ex) {
+                        // en caso de error en consulta head-to-head, continuar con siguiente criterio
+                    }
+
+                    // 4) goles a favor DESC
+                    return Integer.compare(b.getGolesAFavor(), a.getGolesAFavor());
+                })
+                .toList();
 
         ApiResponse<List<TablaPosiciones>> response = ApiResponseBuilder
-            .success(posiciones)
-            .message("Tabla de posiciones del torneo " + torneo.getNombre() + ": " + posiciones.size() + " equipos")
-            .path("/api/tabla-posiciones/torneo/" + torneoId)
-            .build();
+                .success(posiciones)
+                .message("Tabla de posiciones del torneo " + torneo.getNombre() + ": " + posiciones.size() + " equipos")
+                .path("/api/tabla-posiciones/torneo/" + torneoId)
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -85,22 +136,22 @@ public class TablaPosicionesController {
             @PathVariable Integer equipoId) {
 
         Optional<TablaPosiciones> posicionOpt = tablaPosicionesService.findAll().stream()
-            .filter(tp -> tp.getTorneo().getTorneosId().equals(torneoId) &&
-                         tp.getEquipo().getEquiposId().equals(equipoId))
-            .findFirst();
+                .filter(tp -> tp.getTorneo().getTorneosId().equals(torneoId) &&
+                        tp.getEquipo().getEquiposId().equals(equipoId))
+                .findFirst();
 
         if (posicionOpt.isPresent()) {
             ApiResponse<TablaPosiciones> response = ApiResponseBuilder
-                .success(posicionOpt.get())
-                .message("Posición encontrada")
-                .path("/api/tabla-posiciones/torneo/" + torneoId + "/equipo/" + equipoId)
-                .build();
+                    .success(posicionOpt.get())
+                    .message("Posición encontrada")
+                    .path("/api/tabla-posiciones/torneo/" + torneoId + "/equipo/" + equipoId)
+                    .build();
             return ResponseEntity.ok(response);
         } else {
             ApiResponse<TablaPosiciones> response = ApiResponseBuilder
-                .<TablaPosiciones>error("Posición no encontrada", HttpStatus.NOT_FOUND.value())
-                .path("/api/tabla-posiciones/torneo/" + torneoId + "/equipo/" + equipoId)
-                .build();
+                    .<TablaPosiciones>error("Posición no encontrada", HttpStatus.NOT_FOUND.value())
+                    .path("/api/tabla-posiciones/torneo/" + torneoId + "/equipo/" + equipoId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
@@ -113,10 +164,10 @@ public class TablaPosicionesController {
         List<TablaPosiciones> posiciones = tablaPosicionesService.findAll();
 
         ApiResponse<List<TablaPosiciones>> response = ApiResponseBuilder
-            .success(posiciones)
-            .message("Total de posiciones: " + posiciones.size())
-            .path("/api/tabla-posiciones")
-            .build();
+                .success(posiciones)
+                .message("Total de posiciones: " + posiciones.size())
+                .path("/api/tabla-posiciones")
+                .build();
         return ResponseEntity.ok(response);
     }
 
@@ -129,18 +180,17 @@ public class TablaPosicionesController {
 
         if (posicion.isPresent()) {
             ApiResponse<TablaPosiciones> response = ApiResponseBuilder
-                .success(posicion.get())
-                .message("Posición encontrada")
-                .path("/api/tabla-posiciones/" + id)
-                .build();
+                    .success(posicion.get())
+                    .message("Posición encontrada")
+                    .path("/api/tabla-posiciones/" + id)
+                    .build();
             return ResponseEntity.ok(response);
         } else {
             ApiResponse<TablaPosiciones> response = ApiResponseBuilder
-                .<TablaPosiciones>error("Posición no encontrada", HttpStatus.NOT_FOUND.value())
-                .path("/api/tabla-posiciones/" + id)
-                .build();
+                    .<TablaPosiciones>error("Posición no encontrada", HttpStatus.NOT_FOUND.value())
+                    .path("/api/tabla-posiciones/" + id)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
     }
 }
-

@@ -18,20 +18,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Torneo {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer torneosId;
-    
+
     @Column(nullable = false, length = 255)
     private String nombre;
-    
+
     @Column(nullable = false, length = 50, name = "tipo_formato")
     private String tipoFormato;
-    
+
     @Column(nullable = false, name = "fecha_inicio")
     private LocalDate fechaInicio;
-    
+
     @JsonIgnore
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Equipo> equipos;
@@ -43,5 +43,17 @@ public class Torneo {
     @JsonIgnore
     @OneToMany(mappedBy = "torneo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TablaPosiciones> tablasPositiones;
-}
 
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'BORRADOR'")
+    private String estado = "BORRADOR";
+
+    @Column(name = "num_grupos")
+    private Integer numGrupos;
+
+    @PrePersist
+    private void prePersist() {
+        if (this.estado == null) {
+            this.estado = "BORRADOR";
+        }
+    }
+}

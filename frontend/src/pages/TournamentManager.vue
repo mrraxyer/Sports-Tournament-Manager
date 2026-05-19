@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, computed } from 'vue'
+import { onMounted, reactive, computed, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import api from '../services/api'
 import Navbar from '../components/Navbar.vue'
@@ -11,12 +11,15 @@ interface Tournament {
   nombre: string
   tipoFormato: string
   fechaInicio: string
+  estado?: string
 }
 
 interface FormData {
   nombre: string
   tipoFormato: string
   fechaInicio: string
+  numGrupos?: number
+  clasificadosPorGrupo?: number
 }
 
 const tournaments = reactive<Tournament[]>([])
@@ -30,10 +33,31 @@ const form = reactive<FormData>({
   nombre: '',
   tipoFormato: 'Round-Robin',
   fechaInicio: '',
+  numGrupos: 2,
+  clasificadosPorGrupo: 2,
 })
 
+const stateChangingId = ref<number | null>(null)
+
+async function changeEstado(torneoId: number, nuevoEstado: string) {
+  stateChangingId.value = torneoId
+  feedback.type = ''
+  feedback.message = ''
+  try {
+    await api.patch(`/torneos/${torneoId}/estado`, null, { params: { estado: nuevoEstado } })
+    feedback.type = 'success'
+    feedback.message = `Estado actualizado a ${nuevoEstado}`
+    await fetchTournaments()
+  } catch (error) {
+    feedback.type = 'error'
+    feedback.message = error instanceof Error ? error.message : 'Error al cambiar estado'
+  } finally {
+    stateChangingId.value = null
+  }
+}
+
 const isAdmin = computed(() => auth.session?.usuario.rol === 'ADMIN')
-const formatoOptions = ['Round-Robin', 'Elimination']
+const formatoOptions = ['Round-Robin', 'Elimination', 'Grupos']
 
 async function fetchTournaments() {
   loading.fetch = true
@@ -71,6 +95,8 @@ async function submitForm() {
       nombre: form.nombre.trim(),
       tipoFormato: form.tipoFormato,
       fechaInicio: form.fechaInicio,
+      numGrupos: form.tipoFormato === 'Grupos' ? form.numGrupos : undefined,
+      clasificadosPorGrupo: form.tipoFormato === 'Grupos' ? form.clasificadosPorGrupo : undefined,
     }
 
     await api.post('/torneos', payload)
@@ -140,6 +166,22 @@ onMounted(() => {
             </label>
           </div>
 
+          <div v-if="form.tipoFormato === 'Grupos'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label class="block space-y-1.5">
+              <span class="text-sm font-medium text-gray-700">Número de grupos</span>
+              <input v-model.number="form.numGrupos" type="number" min="1"
+                class="w-full px-3 py-2.5 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
+            </label>
+
+            <label class="block space-y-1.5">
+              <span class="text-sm font-medium text-gray-700">Clasificados por grupo</span>
+              <input v-model.number="form.clasificadosPorGrupo" type="number" min="1"
+                class="w-full px-3 py-2.5 border border-gray-300 rounded bg-white text-gray-900 focus:outline-2 focus:outline-blue-400 focus:outline-offset-1" />
+            </label>
+
+            <div></div>
+          </div>
+
           <div v-if="feedback.message" :class="{
             'px-4 py-3 rounded border bg-green-50 border-green-300 text-green-700': feedback.type === 'success',
             'px-4 py-3 rounded border bg-red-50 border-red-300 text-red-700': feedback.type === 'error'
@@ -177,8 +219,10 @@ onMounted(() => {
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Nombre</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tipo de Formato</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Estado</th>
                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Fecha de Inicio</th>
                 <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Partidos</th>
+                <th class="px-6 py-3 text-center text-sm font-semibold text-gray-900">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -187,12 +231,32 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-900">{{ tournament.torneosId }}</td>
                 <td class="px-6 py-3 text-sm text-gray-900">{{ tournament.nombre }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.tipoFormato }}</td>
+                <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.estado ?? '-' }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
                 <td class="px-6 py-3 text-center">
-                  <router-link
-                    :to="`/tournaments/${tournament.torneosId}/matches`"
-                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                  >Ver partidos</router-link>
+                  <router-link :to="`/tournaments/${tournament.torneosId}/matches`"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">Ver
+                    partidos</router-link>
+                </td>
+                <td class="px-6 py-3 text-center">
+                  <div class="flex items-center justify-center gap-2">
+                    <button v-if="tournament.estado === 'BORRADOR'" :disabled="stateChangingId === tournament.torneosId"
+                      @click="changeEstado(tournament.torneosId, 'ACTIVO')"
+                      class="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-60">
+                      <span v-if="stateChangingId === tournament.torneosId">Procesando…</span>
+                      <span v-else>Activar</span>
+                    </button>
+
+                    <button v-else-if="tournament.estado === 'ACTIVO'"
+                      :disabled="stateChangingId === tournament.torneosId"
+                      @click="changeEstado(tournament.torneosId, 'FINALIZADO')"
+                      class="px-3 py-1.5 bg-amber-600 text-white text-sm rounded hover:bg-amber-700 disabled:opacity-60">
+                      <span v-if="stateChangingId === tournament.torneosId">Procesando…</span>
+                      <span v-else>Finalizar</span>
+                    </button>
+
+                    <span v-else class="text-sm text-gray-600">-</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -233,10 +297,9 @@ onMounted(() => {
                 <td class="px-6 py-3 text-sm text-gray-700">{{ tournament.tipoFormato }}</td>
                 <td class="px-6 py-3 text-sm text-gray-700">{{ formatDate(tournament.fechaInicio) }}</td>
                 <td class="px-6 py-3 text-center">
-                  <router-link
-                    :to="`/tournaments/${tournament.torneosId}/matches`"
-                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                  >Ver partidos</router-link>
+                  <router-link :to="`/tournaments/${tournament.torneosId}/matches`"
+                    class="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">Ver
+                    partidos</router-link>
                 </td>
               </tr>
             </tbody>

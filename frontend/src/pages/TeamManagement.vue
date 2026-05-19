@@ -20,6 +20,8 @@ const {
   submitForm,
   openDeleteConfirm,
   confirmDelete,
+  selectedTorneoId,
+  fetchTeamsByTorneo,
 } = useTeams()
 
 const showPlayerRoster = ref(false)
@@ -106,8 +108,17 @@ onMounted(() => {
 
       <!-- Teams Table -->
       <section class="bg-white border border-gray-300 rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-300 bg-gray-50">
+        <div class="px-6 py-4 border-b border-gray-300 bg-gray-50 flex items-center justify-between">
           <h3 class="text-xl font-semibold text-gray-900">Equipos Existentes</h3>
+          <div class="flex items-center gap-3">
+            <label class="text-sm text-gray-700">Filtrar por torneo</label>
+            <select v-model.number="selectedTorneoId" @change="fetchTeamsByTorneo(selectedTorneoId || null)"
+              class="px-3 py-2 border border-gray-300 rounded bg-white">
+              <option :value="null">Todos</option>
+              <option v-for="torneo in torneos" :key="torneo.torneosId" :value="torneo.torneosId">{{ torneo.nombre }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div v-if="loading.fetch" class="px-6 py-8 text-center text-gray-600">
@@ -170,14 +181,9 @@ onMounted(() => {
       :team-name="selectedTeamName" @close="closePlayerRoster" />
 
     <!-- Delete Confirmation Modal -->
-    <ConfirmModal
-      v-model="showDeleteConfirm"
-      title="Confirmar Eliminación"
+    <ConfirmModal v-model="showDeleteConfirm" title="Confirmar Eliminación"
       :message="`¿Eliminar el equipo ${deletingEquipo?.nombre}?`"
-      detail="Se eliminarán también todos sus jugadores y partidos asociados."
-      confirm-label="Eliminar"
-      :loading="loading.delete"
-      @confirm="confirmDelete"
-    />
+      detail="Se eliminarán también todos sus jugadores y partidos asociados." confirm-label="Eliminar"
+      :loading="loading.delete" @confirm="confirmDelete" />
   </div>
 </template>

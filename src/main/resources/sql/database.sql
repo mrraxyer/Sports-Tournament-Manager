@@ -20,6 +20,15 @@ CREATE TABLE IF NOT EXISTS usuarios (
     contrasena VARCHAR(255) NOT NULL
 );
 
+-- Almacena tokens de autenticación persistentes (sin expiración de memoria en reinicio).
+CREATE TABLE IF NOT EXISTS auth_tokens (
+    token_id SERIAL PRIMARY KEY,
+    usuarios_id INT NOT NULL REFERENCES usuarios (usuarios_id) ON DELETE CASCADE,
+    token_value VARCHAR(512) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Contiene los detalles de configuración para cada torneo.
 CREATE TABLE IF NOT EXISTS torneos (
     torneos_id SERIAL PRIMARY KEY,
@@ -66,3 +75,26 @@ CREATE TABLE IF NOT EXISTS tabla_posiciones (
     goles_a_favor INT DEFAULT 0,
     goles_en_contra INT DEFAULT 0
 );
+
+-- Migraciones para nuevas columnas requeridas por las features F2, F3 y F5
+ALTER TABLE torneos
+ADD COLUMN IF NOT EXISTS estado VARCHAR(20) NOT NULL DEFAULT 'BORRADOR';
+
+-- Actualizar valores NULL a BORRADOR
+UPDATE torneos SET estado = 'BORRADOR' WHERE estado IS NULL;
+
+ALTER TABLE torneos ADD COLUMN IF NOT EXISTS num_grupos INT;
+
+ALTER TABLE partidos ADD COLUMN IF NOT EXISTS grupo VARCHAR(10);
+
+ALTER TABLE tabla_posiciones
+ADD COLUMN IF NOT EXISTS grupo VARCHAR(10);
+
+ALTER TABLE tabla_posiciones
+ADD COLUMN IF NOT EXISTS victorias INT NOT NULL DEFAULT 0;
+
+ALTER TABLE tabla_posiciones
+ADD COLUMN IF NOT EXISTS empates INT NOT NULL DEFAULT 0;
+
+ALTER TABLE tabla_posiciones
+ADD COLUMN IF NOT EXISTS derrotas INT NOT NULL DEFAULT 0;

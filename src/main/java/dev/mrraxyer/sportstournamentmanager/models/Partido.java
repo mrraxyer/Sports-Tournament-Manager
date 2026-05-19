@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Entidad Partido: Registra el calendario y los resultados de los partidos del torneo.
+ * Entidad Partido: Registra el calendario y los resultados de los partidos del
+ * torneo.
  * Incluye información de equipos participantes, goles y fecha.
  */
 @Entity
@@ -16,23 +17,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Partido {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer partidosId;
-    
+
     @ManyToOne
     @JoinColumn(name = "torneos_id", nullable = false)
     private Torneo torneo;
-    
+
     @ManyToOne
     @JoinColumn(name = "id_equipo_local", nullable = false)
     private Equipo equipoLocal;
-    
+
     @ManyToOne
     @JoinColumn(name = "id_equipo_visitante", nullable = false)
     private Equipo equipoVisitante;
-    
+
     @Column(name = "goles_local", nullable = false)
     private Integer golesLocal = 0;
 
@@ -44,5 +45,7 @@ public class Partido {
 
     @Column(nullable = false, name = "fecha_partido")
     private LocalDateTime fechaPartido;
-}
 
+    @Column(name = "grupo")
+    private String grupo;
+}

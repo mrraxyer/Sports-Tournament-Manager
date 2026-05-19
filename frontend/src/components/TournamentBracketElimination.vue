@@ -50,50 +50,35 @@ function winner(partido: Partido): 'local' | 'visitante' | 'empate' {
 
     <div class="p-6 overflow-x-auto">
       <div class="flex gap-6 items-stretch min-w-max">
-        <div
-          v-for="ronda in rondas"
-          :key="ronda.date"
-          class="flex flex-col"
-        >
-          <div
-            class="text-xs font-bold uppercase tracking-wide text-center mb-3"
-            :class="ronda.matches.every(m => m.jugado) ? 'text-blue-600' : 'text-gray-400'"
-          >
+        <div v-for="ronda in rondas" :key="ronda.date" class="flex flex-col">
+          <div class="text-xs font-bold uppercase tracking-wide text-center mb-3"
+            :class="ronda.matches.every(m => m.jugado) ? 'text-blue-600' : 'text-gray-400'">
             {{ ronda.label }}
           </div>
 
           <div class="flex flex-col flex-1 justify-around gap-3">
-            <div
-              v-for="partido in ronda.matches"
-              :key="partido.partidosId"
+            <div v-for="partido in ronda.matches" :key="partido.partidosId"
               class="w-44 rounded border overflow-hidden text-xs"
-              :class="partido.jugado ? 'border-blue-200' : 'border-dashed border-gray-300'"
-            >
+              :class="partido.jugado ? 'border-blue-200' : 'border-dashed border-gray-300'">
               <!-- Fila equipo local -->
-              <div
-                class="px-3 py-2 flex justify-between items-center border-b"
-                :class="partido.jugado && winner(partido) === 'local'
-                  ? 'bg-blue-600 text-white font-bold border-blue-600'
-                  : partido.jugado
-                    ? 'bg-blue-50 text-blue-900 border-blue-100'
-                    : 'bg-white text-gray-400 border-gray-100'"
-              >
-                <span class="truncate max-w-[120px]">{{ partido.equipoLocal.nombre }}</span>
+              <div class="px-3 py-2 flex justify-between items-center border-b" :class="partido.jugado && winner(partido) === 'local'
+                ? 'bg-blue-600 text-white font-bold border-blue-600'
+                : partido.jugado
+                  ? 'bg-blue-50 text-blue-900 border-blue-100'
+                  : 'bg-white text-gray-400 border-gray-100'">
+                <span class="truncate max-w-30">{{ partido.equipoLocal.nombre }}</span>
                 <span class="font-bold ml-2 shrink-0">
                   {{ partido.jugado ? partido.golesLocal : '–' }}
                 </span>
               </div>
 
               <!-- Fila equipo visitante -->
-              <div
-                class="px-3 py-2 flex justify-between items-center"
-                :class="partido.jugado && winner(partido) === 'visitante'
-                  ? 'bg-blue-600 text-white font-bold'
-                  : partido.jugado
-                    ? 'bg-blue-50 text-blue-800'
-                    : 'bg-white text-gray-400'"
-              >
-                <span class="truncate max-w-[120px]">{{ partido.equipoVisitante.nombre }}</span>
+              <div class="px-3 py-2 flex justify-between items-center" :class="partido.jugado && winner(partido) === 'visitante'
+                ? 'bg-blue-600 text-white font-bold'
+                : partido.jugado
+                  ? 'bg-blue-50 text-blue-800'
+                  : 'bg-white text-gray-400'">
+                <span class="truncate max-w-30">{{ partido.equipoVisitante.nombre }}</span>
                 <span class="font-bold ml-2 shrink-0">
                   {{ partido.jugado ? partido.golesVisitante : '–' }}
                 </span>

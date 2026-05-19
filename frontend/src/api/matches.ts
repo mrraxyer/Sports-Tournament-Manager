@@ -9,6 +9,7 @@ export interface Partido {
   golesVisitante: number
   fechaPartido: string
   jugado: boolean
+  grupo?: string | null
 }
 
 export interface TablaPosiciones {
@@ -18,6 +19,10 @@ export interface TablaPosiciones {
   partidosJugados: number
   golesAFavor: number
   golesEnContra: number
+  grupo?: string | null
+  victorias?: number
+  empates?: number
+  derrotas?: number
 }
 
 export const matchAPI = {
@@ -39,6 +44,24 @@ export const matchAPI = {
     const response = await api.post<{ data: Partido[] }>(
       `/torneos/${tournamentId}/generar-calendario`
     )
+    return response.data.data || []
+  },
+
+  async reschedule(id: number, fechaPartidoIso: string): Promise<Partido> {
+    const payload = { fechaPartido: fechaPartidoIso }
+    const response = await api.put<{ data: Partido }>(`/partidos/${id}`, payload)
+    return response.data.data
+  },
+  async delete(id: number): Promise<void> {
+    await api.delete(`/partidos/${id}`)
+  },
+}
+
+export const tournamentAPI = {
+  async advanceToElimination(torneoId: number, clasificadosPorGrupo = 2) {
+    const response = await api.post<{ data: Partido[] }>(`/torneos/${torneoId}/avanzar-eliminatoria`, null, {
+      params: { clasificadosPorGrupo },
+    })
     return response.data.data || []
   },
 }

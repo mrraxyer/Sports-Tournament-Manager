@@ -48,6 +48,11 @@ export const teamAPI = {
   async delete(id: number) {
     await api.delete(`/equipos/${id}`)
   },
+
+  async listByTorneo(torneoId: number) {
+    const response = await api.get<{ data: Equipo[] }>(`/torneos/${torneoId}/equipos`)
+    return response.data.data || []
+  },
 }
 
 export const tournamentAPI = {
