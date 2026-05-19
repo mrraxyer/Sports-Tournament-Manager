@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useMatches } from '../composables/useMatches'
+import { useTournamentPdf } from '../composables/useTournamentPdf'
 import Navbar from '../components/Navbar.vue'
 import TournamentBracketRoundRobin from '../components/TournamentBracketRoundRobin.vue'
 import TournamentBracketElimination from '../components/TournamentBracketElimination.vue'
@@ -14,6 +15,23 @@ const auth = useAuthStore()
 const torneoId = computed(() => Number(route.params.torneoId))
 
 const { partidos, standings, loading, fetchAll } = useMatches()
+const { downloadPdf } = useTournamentPdf()
+
+const exportLoading = ref(false)
+
+async function exportPDF() {
+  exportLoading.value = true
+  try {
+    downloadPdf(
+      tournamentName.value,
+      partidos[0]?.torneo?.tipoFormato ?? '',
+      partidos,
+      standings,
+    )
+  } finally {
+    exportLoading.value = false
+  }
+}
 
 const openMatches = ref(true)
 const openStandings = ref(true)
@@ -60,8 +78,6 @@ const formatDate = (date: string) => {
   if (!date) return '-'
   return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(date))
 }
-
-function exportPDF() { window.print() }
 
 onMounted(() => {
   auth.hydrateSession()
@@ -113,9 +129,9 @@ onMounted(() => {
             <div class="text-xl font-bold text-gray-900">{{ totalPending }}</div>
             <div class="text-xs text-gray-500">Pendientes</div>
           </div>
-          <button v-if="partidos.length > 0" @click="exportPDF"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded hover:bg-blue-700 transition-colors">
-            Exportar PDF
+          <button v-if="partidos.length > 0" @click="exportPDF" :disabled="exportLoading"
+            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded hover:bg-blue-700 disabled:opacity-60 transition-colors">
+            {{ exportLoading ? 'Generando…' : 'Exportar PDF' }}
           </button>
         </div>
       </div>
